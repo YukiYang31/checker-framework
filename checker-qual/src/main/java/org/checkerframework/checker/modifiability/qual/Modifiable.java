@@ -23,4 +23,3 @@ import org.checkerframework.framework.qual.TypeUseLocation;
 @QualifierForLiterals(LiteralKind.STRING)
 @DefaultFor(TypeUseLocation.LOWER_BOUND)
 public @interface Modifiable {}
-

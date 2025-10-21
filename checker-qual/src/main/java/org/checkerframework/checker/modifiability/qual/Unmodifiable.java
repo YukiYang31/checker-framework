@@ -21,4 +21,3 @@ import org.checkerframework.framework.qual.SubtypeOf;
 @SubtypeOf({})
 @DefaultQualifierInHierarchy
 public @interface Unmodifiable {}
-
