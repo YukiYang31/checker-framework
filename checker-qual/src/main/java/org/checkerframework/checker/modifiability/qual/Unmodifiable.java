@@ -9,7 +9,7 @@ import org.checkerframework.framework.qual.DefaultQualifierInHierarchy;
 import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * Denotes a possibly-tainted value: at run time, the value might be tainted or might be untainted.
+ * Denotes a value that might be modifiable or might not be.
  *
  * @see Untainted
  * @see org.checkerframework.checker.tainting.TaintingChecker
