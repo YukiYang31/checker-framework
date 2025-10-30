@@ -1,6 +1,5 @@
 import java.util.List;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
-import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 
 class TestHierarchy {
   void testHierarchy(@Unmodifiable List<String> unmod, @Modifiable List<String> mod) {

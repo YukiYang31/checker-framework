@@ -19,7 +19,7 @@ import org.checkerframework.framework.qual.TypeUseLocation;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
-@SubtypeOf(Unmodifiable.class)
+@SubtypeOf(Unknown.class)
 @QualifierForLiterals(LiteralKind.STRING)
 @DefaultFor(TypeUseLocation.LOWER_BOUND)
 public @interface Modifiable {}

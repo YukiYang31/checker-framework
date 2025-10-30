@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.List;
-import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 
 public class BasicModifiableTest {
 

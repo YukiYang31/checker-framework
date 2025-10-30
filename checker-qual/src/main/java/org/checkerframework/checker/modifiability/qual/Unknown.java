@@ -11,13 +11,13 @@ import org.checkerframework.framework.qual.SubtypeOf;
 /**
  * Denotes a value that might be modifiable or might not be.
  *
- * @see Untainted
- * @see org.checkerframework.checker.tainting.TaintingChecker
- * @checker_framework.manual #tainting-checker Tainting Checker
+ * @see Unknown
+ * @see org.checkerframework.checker.Unknown.ModifiabilityChecker
+ * @checker_framework.manual #modifiability-checker Modifiability Checker
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
 @SubtypeOf({})
 @DefaultQualifierInHierarchy
-public @interface Unmodifiable {}
+public @interface Unknown {}
