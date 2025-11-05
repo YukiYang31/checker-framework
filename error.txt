@@ -1,0 +1,189 @@
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy UP-TO-DATE
+> Task :buildSrc:processResources NO-SOURCE
+> Task :buildSrc:classes UP-TO-DATE
+> Task :buildSrc:jar UP-TO-DATE
+> Task :framework-test:processResources NO-SOURCE
+> Task :framework:processStubifierResources NO-SOURCE
+> Task :annotation-file-utilities:processResources NO-SOURCE
+> Task :checker-qual:processResources NO-SOURCE
+> Task :dataflow:processResources NO-SOURCE
+> Task :javacutil:processResources NO-SOURCE
+> Task :checker-util:processResources NO-SOURCE
+> Task :checker:processResources UP-TO-DATE
+> Task :checker:processTestannotationsResources NO-SOURCE
+> Task :checker:processTestResources NO-SOURCE
+> Task :setLocalRepo
+> Task :installGitHooks UP-TO-DATE
+> Task :checker:generateGitProperties UP-TO-DATE
+> Task :checker-qual:compileJava9
+> Task :checker-qual:compileJava
+> Task :checker-qual:classes
+> Task :checker-qual:jar UP-TO-DATE
+> Task :checker-util:compileJava UP-TO-DATE
+> Task :checker:compileTestannotationsJava UP-TO-DATE
+> Task :checker:testannotationsClasses UP-TO-DATE
+> Task :annotation-file-utilities:compileJava UP-TO-DATE
+> Task :annotation-file-utilities:classes UP-TO-DATE
+> Task :checker-util:classes UP-TO-DATE
+> Task :annotation-file-utilities:jar UP-TO-DATE
+> Task :checker-util:jar UP-TO-DATE
+> Task :framework:cloneTypetoolsJdk
+> Task :javacutil:compileJava
+> Task :javacutil:classes
+> Task :javacutil:jar UP-TO-DATE
+> Task :framework:compileStubifierJava
+> Task :framework:stubifierClasses
+> Task :framework:stubifierJar UP-TO-DATE
+> Task :framework-test:compileJava
+> Task :framework-test:classes
+> Task :framework-test:jar UP-TO-DATE
+> Task :dataflow:compileJava
+> Task :dataflow:classes
+> Task :dataflow:jar UP-TO-DATE
+
+> Task :framework:compileJava
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/common/wholeprograminference/WholeProgramInferenceJavaParserStorage.java:266: error: cannot access MethodTree
+        classAnnos.callableDeclarations.get(JVMNames.getJVMMethodSignature(methodElt));
+                                                    ^
+  class file for MethodTree not found
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/common/wholeprograminference/WholeProgramInferenceJavaParserStorage.java:830: error: no suitable method found for getJVMMethodSignature(com.sun.source.tree.MethodTree)
+            String executableSignature = JVMNames.getJVMMethodSignature(javacTree);
+                                                 ^
+    method JVMNames.getJVMMethodSignature(MethodTree) is not applicable
+      (argument mismatch; com.sun.source.tree.MethodTree cannot be converted to MethodTree)
+    method JVMNames.getJVMMethodSignature(ExecutableElement) is not applicable
+      (argument mismatch; com.sun.source.tree.MethodTree cannot be converted to ExecutableElement)
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/AnnotatedTypeFactory.java:1889: error: cannot access Type
+        declaringType = TypesUtils.wildUpperBound(declaringType, processingEnv);
+                                                 ^
+  class file for Type not found
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/util/defaults/QualifierDefaults.java:1230: error: cannot access WildcardType
+      TypeParameterElement e = TypesUtils.wildcardToTypeParam(wildcardType.getUnderlyingType());
+                                         ^
+  class file for Type.WildcardType not found
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/util/typeinference8/types/InferenceFactory.java:479: error: incompatible types: Type cannot be converted to com.sun.tools.javac.code.Type
+    Type t1 = TypeAnnotationUtils.unannotatedType(tm1);
+                                                 ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/util/typeinference8/types/InferenceFactory.java:480: error: incompatible types: Type cannot be converted to com.sun.tools.javac.code.Type
+    Type t2 = TypeAnnotationUtils.unannotatedType(tm2);
+                                                 ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/util/typeinference8/types/InferenceFactory.java:497: error: incompatible types: Type cannot be converted to com.sun.tools.javac.code.Type
+    Type t1 = TypeAnnotationUtils.unannotatedType(tm1);
+                                                 ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/util/typeinference8/types/InferenceFactory.java:498: error: incompatible types: Type cannot be converted to com.sun.tools.javac.code.Type
+    Type t2 = TypeAnnotationUtils.unannotatedType(tm2);
+                                                 ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/BoundsInitializer.java:177: error: incompatible types: Type cannot be converted to TypeMirror
+      TypeMirror lowerBound = TypesUtils.wildLowerBound(t, atypeFactory.processingEnv);
+                                                       ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/DeclarationsIntoElements.java:67: error: cannot access Compound
+        tcs = tcs.append(TypeAnnotationUtils.createCompoundFromAnnotationMirror(anno, env));
+                                                                               ^
+  class file for Attribute.Compound not found
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:113: error: cannot access TypeAnnotationPosition
+        tapos = TypeAnnotationUtils.methodReturnTAPosition(ret.pos);
+                                                          ^
+  class file for TypeAnnotationPosition not found
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:121: error: incompatible types: TypeAnnotationPosition cannot be converted to com.sun.tools.javac.code.TypeAnnotationPosition
+        tapos = TypeAnnotationUtils.methodReceiverTAPosition(receiverTree.pos);
+                                                            ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:130: error: incompatible types: TypeAnnotationPosition cannot be converted to com.sun.tools.javac.code.TypeAnnotationPosition
+        tapos = TypeAnnotationUtils.methodParameterTAPosition(pidx, param.pos);
+                                                             ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:140: error: incompatible types: TypeAnnotationPosition cannot be converted to com.sun.tools.javac.code.TypeAnnotationPosition
+        tapos = TypeAnnotationUtils.methodThrowsTAPosition(tidx, thr.pos);
+                                                          ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:165: error: incompatible types: TypeAnnotationPosition cannot be converted to com.sun.tools.javac.code.TypeAnnotationPosition
+    TypeAnnotationPosition tapos = TypeAnnotationUtils.fieldTAPosition(((JCTree) var).pos);
+                                                                      ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:193: error: incompatible types: TypeAnnotationPosition cannot be converted to com.sun.tools.javac.code.TypeAnnotationPosition
+    TypeAnnotationPosition tapos = TypeAnnotationUtils.classExtendsTAPosition(implidx, pos);
+                                                                             ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:219: error: incompatible types: TypeAnnotationPosition cannot be converted to com.sun.tools.javac.code.TypeAnnotationPosition
+        tapos = TypeAnnotationUtils.typeParameterTAPosition(tpidx, ((JCTree) tp).pos);
+                                                           ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:221: error: incompatible types: TypeAnnotationPosition cannot be converted to com.sun.tools.javac.code.TypeAnnotationPosition
+        tapos = TypeAnnotationUtils.methodTypeParameterTAPosition(tpidx, ((JCTree) tp).pos);
+                                                                 ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:229: error: incompatible types: com.sun.tools.javac.code.TypeAnnotationPosition cannot be converted to TypeAnnotationPosition
+              TypeAnnotationUtils.createTypeCompoundFromAnnotationMirror(am, tapos, processingEnv);
+                                                                             ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:252: error: incompatible types: TypeAnnotationPosition cannot be converted to com.sun.tools.javac.code.TypeAnnotationPosition
+              TypeAnnotationUtils.typeParameterBoundTAPosition(tpidx, bndidx, ((JCTree) tp).pos);
+                                                              ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:255: error: incompatible types: TypeAnnotationPosition cannot be converted to com.sun.tools.javac.code.TypeAnnotationPosition
+              TypeAnnotationUtils.methodTypeParameterBoundTAPosition(
+                                                                    ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:274: error: cannot access List
+      if (!TypeAnnotationUtils.isTypeCompoundContained(raw, tc, types)) {
+                              ^
+  class file for List not found
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:345: error: incompatible types: com.sun.tools.javac.code.TypeAnnotationPosition cannot be converted to TypeAnnotationPosition
+            TypeAnnotationUtils.createTypeCompoundFromAnnotationMirror(am, tapos, processingEnv);
+                                                                           ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:362: error: incompatible types: com.sun.tools.javac.code.TypeAnnotationPosition cannot be converted to TypeAnnotationPosition
+      TypeAnnotationPosition oldpos = TypeAnnotationUtils.copyTAPosition(tapos);
+                                                                         ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:373: error: incompatible types: com.sun.tools.javac.code.TypeAnnotationPosition cannot be converted to TypeAnnotationPosition
+          TypeAnnotationPosition newpos = TypeAnnotationUtils.copyTAPosition(tapos);
+                                                                             ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:426: error: incompatible types: com.sun.tools.javac.code.TypeAnnotationPosition cannot be converted to TypeAnnotationPosition
+        TypeAnnotationPosition newpos = TypeAnnotationUtils.copyTAPosition(tapos);
+                                                                           ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:448: error: incompatible types: com.sun.tools.javac.code.TypeAnnotationPosition cannot be converted to TypeAnnotationPosition
+      TypeAnnotationPosition newpos = TypeAnnotationUtils.copyTAPosition(tapos);
+                                                                         ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:489: error: incompatible types: com.sun.tools.javac.code.TypeAnnotationPosition cannot be converted to TypeAnnotationPosition
+          TypeAnnotationPosition newpos = TypeAnnotationUtils.copyTAPosition(tapos);
+                                                                             ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/type/TypesIntoElements.java:498: error: incompatible types: com.sun.tools.javac.code.TypeAnnotationPosition cannot be converted to TypeAnnotationPosition
+          TypeAnnotationPosition newpos = TypeAnnotationUtils.copyTAPosition(tapos);
+                                                                             ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/framework/flow/CFTreeBuilder.java:77: error: cannot access TreeMaker
+      JCAnnotation annotationTree = maker.Annotation(typeCompound);
+                                         ^
+  class file for TreeMaker not found
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/common/util/count/AnnotationStatistics.java:95: error: cannot access Log
+    Log log = getCompilerLog();
+                            ^
+  class file for Log not found
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/common/basetype/BaseTypeValidator.java:230: error: incompatible types: Type cannot be converted to TypeMirror
+        TypeAnnotationUtils.unannotatedType(type.getErased().getUnderlyingType());
+                                           ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/common/util/count/JavaCodeStatistics.java:79: error: incompatible types: Log cannot be converted to com.sun.tools.javac.util.Log
+    Log log = getCompilerLog();
+                            ^
+/Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/common/reflection/DefaultReflectionResolver.java:397: error: incompatible types: com.sun.tools.javac.tree.TreeMaker cannot be converted to TreeMaker
+        JCExpression method = TreeUtils.Select(make, receiver, symbol);
+                                               ^
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+34 errors
+
+> Task :framework:compileJava FAILED
+
+[Incubating] Problems report is available at: file:///Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':framework:compileJava'.
+> Compilation failed; see the compiler output below.
+  /Users/yukiyang/Desktop/yukis_very_important_folder/UW/Research/unsupported-operation-warning/checker-framework/framework/src/main/java/org/checkerframework/common/wholeprograminference/WholeProgramInferenceJavaParserStorage.java:266: error: cannot access MethodTree
+          classAnnos.callableDeclarations.get(JVMNames.getJVMMethodSignature(methodElt));
+                                                      ^
+    class file for MethodTree not found
+  34 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.1.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 8s
+24 actionable tasks: 9 executed, 15 up-to-date
