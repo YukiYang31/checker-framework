@@ -1,5 +1,180 @@
 \chapterAndLabel{Modifiability Checker}{modifiability-checker}
 
-The Modifiability Checker warns, at compile time, if a program might throw
-\<UnsupportedOperationException> at run time due to calling a mutating method
-on an unmodifiable collection.
+The Modifiability Checker issues a warning, at compile time, if a program might
+throw \code{UnsupportedOperationException} at run time due to invoking a
+mutating method (such as \code{add} or \code{remove}) on an unmodifiable
+collection.
+
+An \emph{unmodifiable collection} is one that throws
+\code{UnsupportedOperationException} if a mutating method is called.
+The JDK provides many such collections, for example, the results of:
+\begin{itemize}
+  \item \code{List.of()}, \code{List.copyOf()}
+  \item \code{Set.of()}, \code{Set.copyOf()}
+  \item \code{Map.of()}, \code{Map.copyOf()}
+  \item \code{Collections.emptyList()}, \code{Collections.emptySet()}, \code{Collections.emptyMap()}
+  \item \code{Collections.unmodifiableList()}, \code{Collections.unmodifiableSet()}, \code{Collections.unmodifiableMap()}
+\end{itemize}
+
+A \emph{modifiable collection} is one on which mutating methods can be called
+without throwing \code{UnsupportedOperationException}.  Many other methods, such
+as \code{get}, \code{contains}, \code{isEmpty}, and \code{toArray}, may be
+called on any collection, whether modifiable or unmodifiable.
+
+The Modifiability Checker classifies each collection (and iterator) value by its
+\emph{modifiability capability}.  It guarantees that mutating methods are only
+called on collections that are known to be modifiable.  Thus, it prevents a
+common class of runtime bugs where code compiles but fails at execution with
+\code{UnsupportedOperationException}.
+
+To run the Modifiability Checker:
+
+\begin{Verbatim}
+javac -processor org.checkerframework.checker.modifiability.ModifiabilityChecker MyFile.java
+\end{Verbatim}
+
+You can also run it together with other checkers by listing multiple processors
+to \code{-processor}.
+
+\sectionAndLabel{Modifiability annotations}{modifiability-annotations}
+
+The Modifiability Checker provides a small lattice of type qualifiers that
+describe the modifiability capability of a collection.  The main user-visible
+qualifiers are:
+\begin{itemize}
+  \item \code{@UnknownModifiability},
+  \item \code{@Modifiable}, and
+  \item \code{@Unmodifiable}.
+\end{itemize}
+Internally, the checker also uses a bottom qualifier
+\code{@BottomModifiable}, which programmers do not write.
+
+The qualifier hierarchy is shown in
+Figure~\ref{fig-modifiability-lattice}.
+
+\begin{figure}
+  \centering
+  \begin{minipage}{0.5\linewidth}
+\begin{verbatim}
+      @UnknownModifiability
+        /             \
+@Modifiable         @Unmodifiable
+        \              /
+        @BottomModifiable
+\end{verbatim}
+  \end{minipage}
+  \caption{Modifiability qualifier hierarchy.}
+  \label{fig-modifiability-lattice}
+\end{figure}
+
+\begin{description}
+
+\item[\code{@UnknownModifiability}]
+The top qualifier in the hierarchy.  The checker does not know whether the
+collection is modifiable or unmodifiable; it may be either.  This is the default
+qualifier that is applied to unannotated collection types.
+
+\item[\code{@Modifiable}]
+The collection is known to support all standard mutating operations, such as
+\code{add}, \code{remove}, \code{clear}, and \code{put}, without throwing
+\code{UnsupportedOperationException}.  A call to a mutating method is permitted
+only when the receiver is annotated as \code{@Modifiable}.
+
+\item[\code{@Unmodifiable}]
+The collection is known to be unmodifiable: any mutating operation would throw
+\code{UnsupportedOperationException}.  A call to a mutating method on a
+\code{@Unmodifiable} receiver always yields a type-checking error.
+
+\item[\code{@BottomModifiable}]
+The bottom qualifier in the hierarchy.  It is a subtype of both
+\code{@Modifiable} and \code{@Unmodifiable}.  It is used internally by the
+checker and is not intended to be written by programmers.
+
+\end{description}
+
+Each annotation’s Javadoc should include a precise description and an example
+use, and should link back to this chapter using
+\code{@checker\_framework.manual \#modifiability-checker Modifiability Checker}.
+Internal qualifiers such as \code{@BottomModifiable} should be documented last.
+
+\sectionAndLabel{What the Modifiability Checker checks}{modifiability-rules}
+
+The Modifiability Checker enforces that mutating methods are only called on
+collections that are definitely modifiable.
+
+A \emph{mutating method} is any method that may change the size or contents of a
+collection, such as:
+\begin{itemize}
+  \item \code{add}, \code{addAll}
+  \item \code{remove}, \code{removeAll}, \code{retainAll}, \code{clear}
+  \item \code{put}, \code{putAll}, \code{replace}, \code{replaceAll}
+\end{itemize}
+
+A \emph{read-only method} is any method that does not modify the collection,
+such as:
+\begin{itemize}
+  \item \code{contains}, \code{containsAll}
+  \item \code{equals}, \code{hashCode}
+  \item \code{get}, \code{getFirst}, \code{getLast}
+  \item \code{indexOf}, \code{isEmpty}, \code{toArray}
+\end{itemize}
+
+The checker enforces the following rules:
+
+\begin{itemize}
+  \item A call to a mutating method is permitted only if the receiver is
+        annotated as \code{@Modifiable}.
+  \item If the receiver is annotated as \code{@Unmodifiable}, the checker issues
+        an error because the call would always throw
+        \code{UnsupportedOperationException}.
+  \item If the receiver is annotated as \code{@UnknownModifiability}, the checker
+        conservatively issues a warning, because the collection might be
+        unmodifiable at run time.
+  \item Read-only methods may be called on collections of any modifiability
+        qualifier (\code{@UnknownModifiability}, \code{@Modifiable},
+        \code{@Unmodifiable}) without error.
+  \item Subtyping follows the lattice in
+        Figure~\ref{fig-modifiability-lattice}: both \code{@Modifiable} and
+        \code{@Unmodifiable} are subtypes of \code{@UnknownModifiability}, and
+        \code{@BottomModifiable} is a subtype of both.
+\end{itemize}
+
+The checker does not rely on run-time tests or exceptions; it reasons entirely
+from static types.  Methods that are known to return unmodifiable collections
+(such as \code{List.of()} and \code{Collections.unmodifiableList(...)}) should
+be annotated in the JDK as returning \code{@Unmodifiable}, so that the checker
+can track modifiability through library calls.
+
+\sectionAndLabel{Examples}{modifiability-examples}
+
+\begin{Verbatim}
+import java.util.*;
+
+class Demo {
+
+    void factoryExamples() {
+        @Modifiable List<String> a = new ArrayList<>();
+        @Unmodifiable List<String> b = List.of("x", "y");
+        @UnknownModifiability List<String> c = maybeList();
+
+        a.add("z");  // OK: receiver is @Modifiable
+
+        b.add("z");  // error: mutating @Unmodifiable list
+
+        c.add("z");  // error: warning! possible mutation of a collection whose
+                     //          modifiability is unknown
+    }
+
+    @UnknownModifiability List<String> maybeList() {
+        // Might return modifiable or unmodifiable list.
+        return Math.random() > 0.5 ? List.of("a") : new ArrayList<>();
+    }
+
+    void readonlyExamples(@UnknownModifiability List<String> x,
+                          @Unmodifiable List<String> y) {
+        x.contains("a"); // OK
+        y.get(0);        // OK
+        // Read-only methods are safe for any qualifier.
+    }
+}
+\end{Verbatim}
