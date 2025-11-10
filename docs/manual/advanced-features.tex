@@ -972,6 +972,9 @@ additional implementation work, are
   \ahrefloc{constant-value-checker}{Constant Value Checker} to determine
   whether an expression's value can be known at compile time
   (see \chapterpageref{constant-value-checker})
+\item
+  \ahrefloc{modifiability-checker}{Modifiability Checker} to
+  warn about possible \<UnsupportedOperationException> at run time on mutatable collections. (see \chapterpageref{modifiability-checker})
 \end{itemize}
 
 
@@ -1016,9 +1019,6 @@ Type systems that cannot support a run-time test are:
 \item
   \ahrefloc{must-call-checker}{Must Call Checker} to over-approximate the
   methods that should be called on an object before it is de-allocated (see \chapterpageref{must-call-checker})
-\item
-  \ahrefloc{modifiability-checker}{Modifiability Checker} to
-  warn about possible \<UnsupportedOperationException> at run time on mutatable collections. (see \chapterpageref{modifiability-checker})
 \item
   \ahrefloc{subtyping-checker}{Subtyping Checker} for customized checking without
   writing any code (see \chapterpageref{subtyping-checker})
