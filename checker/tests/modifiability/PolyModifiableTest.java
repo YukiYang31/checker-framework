@@ -12,7 +12,10 @@ public class PolyModifiableTest {
   }
 
   void testPoly(
-      @Modifiable Object mod, @Unmodifiable Object unmod, @UnknownModifiability Object any, @BottomModifiable Object bottom) {
+      @Modifiable Object mod,
+      @Unmodifiable Object unmod,
+      @UnknownModifiability Object any,
+      @BottomModifiable Object bottom) {
 
     // Allowed: preserving same modifiability
     @Modifiable Object a = identity(mod);
@@ -41,6 +44,6 @@ public class PolyModifiableTest {
     // :: error: (assignment)
     @BottomModifiable Object q = identity(unmod); // cannot upcast from Unmodifiable → Bottom
     // :: error: (assignment)
-    @BottomModifiable Object r = identity(any); // cannot upcast from Unknown → Bottom          
+    @BottomModifiable Object r = identity(any); // cannot upcast from Unknown → Bottom
   }
 }
