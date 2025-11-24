@@ -14,11 +14,13 @@ import org.checkerframework.framework.qual.PolymorphicQualifier;
  * possibly parameters). For example:
  *
  * <pre><code>
- *  class Example {
- *    @PolyModifiable List<E> subList(@PolyModifiable List<E> this, int from, int to);
- *  }
- * </pre></code> If the receiver is {@code @Unmodifiable}, the return is {@code @Unmodifiable}. If
- * the receiver is {@code @Modifiable}, the return is {@code @Modifiable}.
+ * class Example {
+ * &nbsp; @PolyModifiable List&lt;E&gt; subList(@PolyModifiable List&lt;E&gt; this, int from, int to);
+ * }
+ * </code></pre>
+ *
+ * If the receiver is {@code @Unmodifiable}, the return is {@code @Unmodifiable}. If the receiver is
+ * {@code @Modifiable}, the return is {@code @Modifiable}.
  */
 @PolymorphicQualifier(UnknownModifiability.class)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
