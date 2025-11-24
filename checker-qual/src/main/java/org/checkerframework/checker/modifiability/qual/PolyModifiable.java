@@ -13,14 +13,12 @@ import org.checkerframework.framework.qual.PolymorphicQualifier;
  * <p>The same qualifier that appears on the receiver will also appear on the return type (and
  * possibly parameters). For example:
  *
- * <pre>
+ * <pre><code>
  *  class Example {
  *    @PolyModifiable List<E> subList(@PolyModifiable List<E> this, int from, int to);
  *  }
- * </pre>
- *
- * If the receiver is {@code @Unmodifiable}, the return is {@code @Unmodifiable}. If the receiver is
- * {@code @Modifiable}, the return is {@code @Modifiable}.
+ * </pre></code> If the receiver is {@code @Unmodifiable}, the return is {@code @Unmodifiable}. If
+ * the receiver is {@code @Modifiable}, the return is {@code @Modifiable}.
  */
 @PolymorphicQualifier(UnknownModifiability.class)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
