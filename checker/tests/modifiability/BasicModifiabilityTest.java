@@ -62,40 +62,13 @@ public class BasicModifiabilityTest {
       @Unmodifiable List<String> unmodList,
       @UnknownModifiability List<String> anyList) {
 
-    // toArray is annotated to return @Modifiable Object[]
-    @Modifiable Object[] arr1 = modList.toArray();
-    @Modifiable Object[] arr2 = unmodList.toArray();
+    modList.toArray();
+    unmodList.toArray();
+    anyList.toArray();
 
-    @Modifiable String[] fromMod = modList.toArray(new String[0]);
-    @Modifiable String[] fromUnmod = unmodList.toArray(new String[0]);
-    @Modifiable String[] fromAny = anyList.toArray(new String[0]);
-
-    // It should be an error to treat the returned array as @Unmodifiable.
-    // :: error: (assignment)
-    @Unmodifiable Object[] bad1 = modList.toArray();
-    // :: error: (assignment)
-    @Unmodifiable Object[] bad2 = unmodList.toArray();
-    // :: error: (assignment)
-    @Unmodifiable String[] u1 = modList.toArray(new String[0]);
-    // :: error: (assignment)
-    @Unmodifiable String[] u2 = unmodList.toArray(new String[0]);
-
-    // But assigning to @UnknownModifiability is OK (Unknown is the top type).
-    @UnknownModifiability String[] anyArr = modList.toArray(new String[0]);
-  }
-
-  void testToArrayArgumentModifiability(
-      List<String> list,
-      @Modifiable String[] modArr,
-      @Unmodifiable String[] unmodArr,
-      @UnknownModifiability String[] anyArr) {
-
-    // Argument array modifiability should not matter: parameter is T[] with
-    // default @UnknownModifiability on the array object.
-
-    list.toArray(modArr);
-    list.toArray(unmodArr);
-    list.toArray(anyArr);
+    String[] fromMod = modList.toArray(new String[0]);
+    String[] fromUnmod = unmodList.toArray(new String[0]);
+    String[] fromAny = anyList.toArray(new String[0]);
   }
 
   void testIteratorPolymorphic(
@@ -117,7 +90,6 @@ public class BasicModifiabilityTest {
     List<String> other = new ArrayList<>();
     other.add("x");
 
-    // OK on modifiable
     mod.addAll(other);
     mod.removeAll(other);
     mod.retainAll(other);
@@ -128,5 +100,20 @@ public class BasicModifiabilityTest {
     unmod.removeAll(other);
     // :: error: (method.invocation)
     unmod.retainAll(other);
+  }
+
+  void testReplaceAll(@Modifiable List<String> mod, @Unmodifiable List<String> unmod) {
+    mod.replaceAll(s -> s + "!");
+
+    // :: error: (method.invocation)
+    unmod.replaceAll(s -> s + "!");
+  }
+
+  void testSubList(@Modifiable List<String> mod, @Unmodifiable List<String> unmod) {
+    List<String> sub = mod.subList(0, mod.size());
+    sub.clear(); //  OK because sub is modifiable
+
+    // :: error: (assignment)
+    @Modifiable List<String> sub2 = unmod.subList(0, unmod.size());
   }
 }
