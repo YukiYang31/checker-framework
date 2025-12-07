@@ -56,7 +56,7 @@ public class MapModifiableTest {
   }
 
   void testReadOnlyOperations() {
-    Map<String, Integer> map = Map.of("a", 1);
+    @Unmodifiable Map<String, Integer> map = Map.of("a", 1);
     map.get("a");
     map.getOrDefault("b", 0);
     map.containsKey("a");
@@ -65,7 +65,7 @@ public class MapModifiableTest {
     map.size();
     map.hashCode();
     map.equals(Map.of("a", 1));
-    Set<Entry<String, Integer>> entries = map.entrySet();
+    @Unmodifiable Set<@Unmodifiable Entry<String, Integer>> entries = map.entrySet();
     Collection<Integer> vals = map.values();
     Set<String> keys = map.keySet();
     map.forEach((k, v) -> {});
