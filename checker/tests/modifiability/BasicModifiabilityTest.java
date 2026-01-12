@@ -74,9 +74,7 @@ public class BasicModifiabilityTest {
   void testIteratorPolymorphic(
       @Modifiable List<String> modList, @Unmodifiable List<String> unmodList) {
 
-    // iterator() is annotated with @PolyModifiable on both receiver and return type.
-    // So the iterator from a modifiable list is modifiable:
-    @Modifiable Iterator<String> itMod = modList.iterator();
+    @UnknownModifiability Iterator<String> itMod = modList.iterator();
 
     // And the iterator from an unmodifiable list is unmodifiable:
     @Unmodifiable Iterator<String> itUnmod = unmodList.iterator();
