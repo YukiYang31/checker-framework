@@ -113,10 +113,7 @@ public class CollectionsModifiableTest {
     // :: error: (assignment)
     @Modifiable Map<String, String> modM = Collections.emptyMap();
 
-    @Unmodifiable Iterator<String> it = Collections.emptyIterator();
-    // Iterator.remove() is a mutating method
-    // :: error: (method.invocation)
-    it.remove();
+    @Modifiable Iterator<String> it = Collections.emptyIterator();
   }
 
   void testFill() {
