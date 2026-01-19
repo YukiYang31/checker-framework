@@ -19,6 +19,9 @@ public class ModifiabilityVisitor extends BaseTypeVisitor<BaseAnnotatedTypeFacto
   @Override
   public Void visitMethodInvocation(MethodInvocationTree node, Void p) {
     ExecutableElement method = TreeUtils.elementFromUse(node);
+    // Check if the method being invoked is annotated with @WillThrowUOE.
+    // Methods with this annotation (like SortedSet.addFirst) are guaranteed to throw
+    // UnsupportedOperationException at runtime, so we report an error immediately.
     if (atypeFactory.getDeclAnnotation(method, WillThrowUOE.class) != null) {
       checker.reportError(node, "usage.will.throw.uoe", method.getSimpleName());
     }
