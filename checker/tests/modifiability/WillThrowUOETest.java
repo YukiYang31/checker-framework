@@ -1,11 +1,11 @@
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class WillThrowUOETest {
 
   void testSortedSet(SortedSet<String> s) {
-    // These methods are annotated with @WillThrowUOE in jdk.astub for SortedSet
-
     // :: error: (usage.will.throw.uoe)
     s.addFirst("foo");
 
@@ -16,12 +16,29 @@ public class WillThrowUOETest {
   void testImplementation(TreeSet<String> ts) {
     // Since TreeSet implements SortedSet, it inherits the methods.
     // The stub file annotates the interface SortedSet.
-    // We verify that calling them on a concrete implementation also triggers the warning.
+    // We verify that calling them on a concrete implementation also triggers the
+    // warning.
 
     // :: error: (usage.will.throw.uoe)
     ts.addFirst("foo");
 
     // :: error: (usage.will.throw.uoe)
     ts.addLast("bar");
+  }
+
+  void testSortedMap(SortedMap<String, String> m) {
+    // :: error: (usage.will.throw.uoe)
+    m.putFirst("foo", "bar");
+
+    // :: error: (usage.will.throw.uoe)
+    m.putLast("baz", "qux");
+  }
+
+  void testImplementation(TreeMap<String, String> tm) {
+    // :: error: (usage.will.throw.uoe)
+    tm.putFirst("foo", "bar");
+
+    // :: error: (usage.will.throw.uoe)
+    tm.putLast("baz", "qux");
   }
 }
