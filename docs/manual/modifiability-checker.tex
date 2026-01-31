@@ -94,6 +94,22 @@ checker and is not intended to be written by programmers.
 
 \end{description}
 
+\subsectionAndLabel{Modifiability method annotations}{modifiability-method-annotations}
+
+The Modifiability Checker supports annotation that specify method
+behavior.  These are declaration annotations, not type annotations:  they
+apply to the method itself rather than to some particular type.
+
+\begin{description}
+
+\item[\code{@WillThrowUOE}]
+This is a declaration annotation (not a type qualifier) that is applied to
+method and constructor declarations.  It indicates that the method always throws
+\code{UnsupportedOperationException}.  The Modifiability Checker issues an
+error for any call to a method annotated with \code{@WillThrowUOE}.
+
+\end{description}
+
 % TODO:
 % Each annotation’s Javadoc should include a precise description and an example
 % use, and should link back to this chapter using

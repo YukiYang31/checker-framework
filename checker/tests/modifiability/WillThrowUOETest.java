@@ -1,7 +1,10 @@
+import java.util.NavigableMap;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public class WillThrowUOETest {
 
@@ -40,5 +43,29 @@ public class WillThrowUOETest {
 
     // :: error: (usage.will.throw.uoe)
     tm.putLast("baz", "qux");
+  }
+
+  void testNavigableMap(NavigableMap<String, String> m) {
+    // :: error: (usage.will.throw.uoe)
+    m.putFirst("foo", "bar");
+
+    // :: error: (usage.will.throw.uoe)
+    m.putLast("baz", "qux");
+  }
+
+  void testConcurrentNavigableMap(ConcurrentNavigableMap<String, String> m) {
+    // :: error: (usage.will.throw.uoe)
+    m.putFirst("foo", "bar");
+
+    // :: error: (usage.will.throw.uoe)
+    m.putLast("baz", "qux");
+  }
+
+  void testConcurrentSkipListMap(ConcurrentSkipListMap<String, String> m) {
+    // :: error: (usage.will.throw.uoe)
+    m.putFirst("foo", "bar");
+
+    // :: error: (usage.will.throw.uoe)
+    m.putLast("baz", "qux");
   }
 }
