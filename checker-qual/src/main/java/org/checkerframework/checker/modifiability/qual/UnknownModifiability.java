@@ -10,7 +10,8 @@ import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
  * Represents an unknown or arbitrary modifiability capability. The checker cannot determine whether
- * the collection is modifiable or unmodifiable. This is the top qualifier in the hierarchy.
+ * the collection is growable, shrinkable, or replaceable. This is the top qualifier in the
+ * hierarchy.
  *
  * <p>This is the default qualifier for unannotated types.
  *

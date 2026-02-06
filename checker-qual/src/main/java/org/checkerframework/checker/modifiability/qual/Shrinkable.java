@@ -8,13 +8,15 @@ import java.lang.annotation.Target;
 import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * Calling all mutating operations such as {@code add}, {@code remove}, {@code clear}, etc. on this
- * collection will not result in throwing {@link UnsupportedOperationException}.
+ * Calling shrink operations such as {@code remove}, {@code clear}, etc. on this collection will not
+ * result in throwing {@link UnsupportedOperationException}.
+ *
+ * <p>No guarantees are made about grow or replace operations.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
-@SubtypeOf({GrowShrink.class, GrowReplace.class, ShrinkReplace.class})
-public @interface Modifiable {}
+@SubtypeOf(UnknownModifiability.class)
+public @interface Shrinkable {}

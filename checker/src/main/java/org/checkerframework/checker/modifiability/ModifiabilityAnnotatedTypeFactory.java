@@ -30,6 +30,7 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     this.UNMODIFIABLE = AnnotationBuilder.fromClass(getElementUtils(), Unmodifiable.class);
     this.UNKNOWN_MODIFIABILITY =
         AnnotationBuilder.fromClass(getElementUtils(), UnknownModifiability.class);
+    addAliasedTypeAnnotation(Unmodifiable.class, UNKNOWN_MODIFIABILITY);
     postInit();
   }
 

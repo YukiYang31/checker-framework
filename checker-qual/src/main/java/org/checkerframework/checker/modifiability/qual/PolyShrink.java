@@ -5,16 +5,18 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.checkerframework.framework.qual.SubtypeOf;
+import org.checkerframework.framework.qual.PolymorphicQualifier;
 
 /**
- * Calling all mutating operations such as {@code add}, {@code remove}, {@code clear}, etc. on this
- * collection will not result in throwing {@link UnsupportedOperationException}.
+ * A polymorphic qualifier for modifiability that preserves the shrink capability.
+ *
+ * <p>Use on methods that preserve shrinkability — for example, {@code Map.keySet()}.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
+ *     <p>TODO: need to implement
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
-@SubtypeOf({GrowShrink.class, GrowReplace.class, ShrinkReplace.class})
-public @interface Modifiable {}
+@PolymorphicQualifier(UnknownModifiability.class)
+public @interface PolyShrink {}
