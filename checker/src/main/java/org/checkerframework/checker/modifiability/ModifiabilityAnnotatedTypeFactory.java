@@ -1,9 +1,19 @@
 package org.checkerframework.checker.modifiability;
 
 import com.sun.source.tree.ExpressionTree;
+import java.lang.annotation.Annotation;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
+import org.checkerframework.checker.modifiability.qual.GrowReplace;
+import org.checkerframework.checker.modifiability.qual.GrowShrink;
+import org.checkerframework.checker.modifiability.qual.Growable;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
+import org.checkerframework.checker.modifiability.qual.Replaceable;
+import org.checkerframework.checker.modifiability.qual.ShrinkReplace;
+import org.checkerframework.checker.modifiability.qual.Shrinkable;
 import org.checkerframework.checker.modifiability.qual.UnknownModifiability;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
@@ -16,7 +26,6 @@ import org.checkerframework.javacutil.TreeUtils;
 public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
 
   private final ExecutableElement iteratorMethodElement;
-  private final AnnotationMirror UNMODIFIABLE;
   private final AnnotationMirror UNKNOWN_MODIFIABILITY;
 
   @SuppressWarnings("this-escape")
@@ -27,11 +36,24 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     this.iteratorMethodElement =
         TreeUtils.getMethod("java.lang.Iterable", "iterator", 0, processingEnv);
     // Cache annotation mirrors for performance.
-    this.UNMODIFIABLE = AnnotationBuilder.fromClass(getElementUtils(), Unmodifiable.class);
     this.UNKNOWN_MODIFIABILITY =
         AnnotationBuilder.fromClass(getElementUtils(), UnknownModifiability.class);
     addAliasedTypeAnnotation(Unmodifiable.class, UNKNOWN_MODIFIABILITY);
     postInit();
+  }
+
+  @Override
+  protected Set<Class<? extends Annotation>> createSupportedTypeQualifiers() {
+    return new LinkedHashSet<>(
+        Arrays.asList(
+            UnknownModifiability.class,
+            Modifiable.class,
+            GrowReplace.class,
+            GrowShrink.class,
+            Growable.class,
+            Replaceable.class,
+            ShrinkReplace.class,
+            Shrinkable.class));
   }
 
   /**
@@ -63,7 +85,7 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
       if (receiverType.hasPrimaryAnnotation(Unmodifiable.class)) {
         // collection.iterator() on an @Unmodifiable collection returns an @Unmodifiable
         // Iterator.
-        returnType.replaceAnnotation(UNMODIFIABLE);
+        returnType.replaceAnnotation(UNKNOWN_MODIFIABILITY);
       } else if (receiverType.hasPrimaryAnnotation(Modifiable.class)) {
         // collection.iterator() on a @Modifiable collection returns an
         // @UnknownModifiability Iterator
