@@ -11,6 +11,7 @@ import org.checkerframework.checker.modifiability.qual.GrowReplace;
 import org.checkerframework.checker.modifiability.qual.GrowShrink;
 import org.checkerframework.checker.modifiability.qual.Growable;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
+import org.checkerframework.checker.modifiability.qual.PolyModifiable;
 import org.checkerframework.checker.modifiability.qual.Replaceable;
 import org.checkerframework.checker.modifiability.qual.ShrinkReplace;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
@@ -48,6 +49,7 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
         Arrays.asList(
             UnknownModifiability.class,
             Modifiable.class,
+            PolyModifiable.class,
             GrowReplace.class,
             GrowShrink.class,
             Growable.class,
