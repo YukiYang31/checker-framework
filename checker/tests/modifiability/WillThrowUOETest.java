@@ -18,7 +18,6 @@ public class WillThrowUOETest {
 
   void testImplementation(TreeSet<String> ts) {
     // Since TreeSet implements SortedSet, it inherits the methods.
-    // The stub file annotates the interface SortedSet.
     // We verify that calling them on a concrete implementation also triggers the
     // warning.
 
