@@ -35,6 +35,8 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
 
   // Cached Types for default handling
   private final TypeMirror setType;
+  private final TypeMirror queueType;
+  private final TypeMirror linkedListType;
   private final TypeMirror mapEntryType;
   private final TypeMirror iteratorType;
 
@@ -57,6 +59,8 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
         TreeUtils.getMethod("java.lang.Iterable", "iterator", 0, processingEnv);
     // Cache types
     this.setType = getElementUtils().getTypeElement("java.util.Set").asType();
+    this.queueType = getElementUtils().getTypeElement("java.util.Queue").asType();
+    this.linkedListType = getElementUtils().getTypeElement("java.util.LinkedList").asType();
     this.mapEntryType = getElementUtils().getTypeElement("java.util.Map.Entry").asType();
     this.iteratorType = getElementUtils().getTypeElement("java.util.Iterator").asType();
 
@@ -155,9 +159,15 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
       TypeMirror erasure = getProcessingEnv().getTypeUtils().erasure(underlyingType);
 
       if (getProcessingEnv()
-          .getTypeUtils()
-          .isSubtype(erasure, getProcessingEnv().getTypeUtils().erasure(setType))) {
-        // Set: Drop R bit
+              .getTypeUtils()
+              .isSubtype(erasure, getProcessingEnv().getTypeUtils().erasure(setType))
+          || (getProcessingEnv()
+                  .getTypeUtils()
+                  .isSubtype(erasure, getProcessingEnv().getTypeUtils().erasure(queueType))
+              && !getProcessingEnv()
+                  .getTypeUtils()
+                  .isSubtype(erasure, getProcessingEnv().getTypeUtils().erasure(linkedListType)))) {
+        // Set or Queue (but not LinkedList): Drop R bit
         removeReplaceable(type);
       } else if (getProcessingEnv()
           .getTypeUtils()

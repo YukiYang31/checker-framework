@@ -1,5 +1,6 @@
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import org.checkerframework.checker.modifiability.qual.GrowReplace;
 import org.checkerframework.checker.modifiability.qual.GrowShrink;
@@ -40,6 +41,14 @@ class SetTest {
     // Growable <-> GrowReplace
     @GrowReplace Set<String> s7 = growable; // Valid: Growable -> GrowReplace (Implicit R)
     @Growable Set<String> s8 = growReplace; // Valid: GrowReplace <: Growable
+  }
+
+  void testQueueAssignment(
+      @Modifiable Queue<String> modifiable, @GrowShrink Queue<String> growShrink) {
+
+    // GrowShrink <-> Modifiable
+    @Modifiable Queue<String> q5 = growShrink; // Valid: GrowShrink -> Modifiable (Implicit R)
+    @GrowShrink Queue<String> q6 = modifiable; // Valid: Modifiable <: GrowShrink
   }
 
   // ==========================================================
