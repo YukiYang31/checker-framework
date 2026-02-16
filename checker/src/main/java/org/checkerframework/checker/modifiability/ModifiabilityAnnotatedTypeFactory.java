@@ -8,6 +8,7 @@ import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import org.checkerframework.checker.modifiability.qual.GrowReplace;
 import org.checkerframework.checker.modifiability.qual.GrowShrink;
 import org.checkerframework.checker.modifiability.qual.Growable;
@@ -28,26 +29,52 @@ import org.checkerframework.framework.type.typeannotator.TypeAnnotator;
 import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.TreeUtils;
 
+/** The type factory for the Modifiability Checker. */
 public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
 
+  /** The {@code Collection.iterator()} method. */
   private final ExecutableElement iteratorMethodElement;
-  private final AnnotationMirror UNKNOWN_MODIFIABILITY;
 
-  // Cached Types for default handling
+  /** The {@code java.util.Set} type. */
   private final TypeMirror setType;
+
+  /** The {@code java.util.Queue} type. */
   private final TypeMirror queueType;
+
+  /** The {@code java.util.LinkedList} type. */
   private final TypeMirror linkedListType;
+
+  /** The {@code java.util.Map.Entry} type. */
   private final TypeMirror mapEntryType;
+
+  /** The {@code java.util.Iterator} type. */
   private final TypeMirror iteratorType;
 
-  // Cached Qualifiers
+  /** The {@code @}{@link UnknknownModifiability} qualifier. */
+  private final AnnotationMirror UNKNOWN_MODIFIABILITY;
+
+  /** The {@code @}{@link Modifiable} qualifier. */
   private final AnnotationMirror MODIFIABLE;
+
+  /** The {@code @}{@link GrowShrink} qualifier. */
   private final AnnotationMirror GROW_SHRINK;
+
+  /** The {@code @}{@link GrowReplace} qualifier. */
   private final AnnotationMirror GROW_REPLACE;
+
+  /** The {@code @}{@link ShrinkReplace} qualifier. */
   private final AnnotationMirror SHRINK_REPLACE;
+
+  /** The {@code @}{@link ShrinkReplace} qualifier. */
   private final AnnotationMirror GROWABLE;
+
+  /** The {@code @}{@link Growable} qualifier. */
   private final AnnotationMirror SHRINKABLE;
+
+  /** The {@code @}{@link Replaceable} qualifier. */
   private final AnnotationMirror REPLACEABLE;
+
+  /** The {@code @}{@link PolyModifiable} qualifier. */
   private final AnnotationMirror POLY_MODIFIABLE;
 
   @SuppressWarnings("this-escape")
@@ -101,6 +128,8 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
    * <p>If a collection is {@code @Unmodifiable}, its iterator should also be treated as
    * {@code @Unmodifiable} (meaning {@code remove()} cannot be called).
    *
+   * <p>MDE: The below looks wrong. UnknownModifiability does not permit any mutations.
+   *
    * <p>If a collection is {@code @Modifiable}, its iterator is {@code @UnknownModifiability} (the
    * default behavior), which still permits calling {@code remove()}.
    */
@@ -114,6 +143,7 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     ParameterizedExecutableType mType =
         super.methodFromUse(tree, methodElt, receiverType, inferTypeArgs);
 
+    // MDE: Explain why using a @Poly qualifier does not work.
     // Special handling for the iterator() method.
     // We want the modifiability of the Iterator to match the modifiability of the
     // Collection.
@@ -122,11 +152,11 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
       AnnotatedTypeMirror returnType = mType.executableType.getReturnType();
 
       if (receiverType.hasPrimaryAnnotation(Unmodifiable.class)) {
-        // collection.iterator() on an @Unmodifiable collection returns an @Unmodifiable
+        // Collection.iterator() on an @Unmodifiable collection returns an @Unmodifiable
         // Iterator.
         returnType.replaceAnnotation(UNKNOWN_MODIFIABILITY);
       } else if (receiverType.hasPrimaryAnnotation(Modifiable.class)) {
-        // collection.iterator() on a @Modifiable collection returns an
+        // Collection.iterator() on a @Modifiable collection returns an
         // @UnknownModifiability Iterator
         // (defaulting to bottom in this hierarchy is treated as safe for use).
         returnType.replaceAnnotation(UNKNOWN_MODIFIABILITY);
@@ -150,34 +180,29 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     public Void visitDeclared(AnnotatedDeclaredType type, Void p) {
       super.visitDeclared(type, p);
 
-      // Skip if polymorphic or explicit bottom
+      // MDE: Does this `if` statement handle explicit bottom?  The comment says it does.
+      // Skip if polymorphic or explicit bottom.
       if (type.hasPrimaryAnnotation(POLY_MODIFIABLE)) {
         return null;
       }
 
       TypeMirror underlyingType = type.getUnderlyingType();
-      TypeMirror erasure = getProcessingEnv().getTypeUtils().erasure(underlyingType);
+      Types types = getProcessingEnv().getTypeUtils();
+      TypeMirror erasure = types.erasure(underlyingType);
 
-      if (getProcessingEnv()
-              .getTypeUtils()
-              .isSubtype(erasure, getProcessingEnv().getTypeUtils().erasure(setType))
-          || (getProcessingEnv()
-                  .getTypeUtils()
-                  .isSubtype(erasure, getProcessingEnv().getTypeUtils().erasure(queueType))
-              && !getProcessingEnv()
-                  .getTypeUtils()
-                  .isSubtype(erasure, getProcessingEnv().getTypeUtils().erasure(linkedListType)))) {
+      // MDE: Rather than inefficiently and verbosely calling (e.g.) `types.erasure(setType)`
+      // every time that `visitDeclared` is called, that value should be stored as a field of the
+      // class.
+      if (types.isSubtype(erasure, types.erasure(setType))
+          || (types.isSubtype(erasure, types.erasure(queueType))
+              && !types.isSubtype(erasure, types.erasure(linkedListType)))) {
         // Set or Queue (but not LinkedList): Drop R bit
         removeReplaceable(type);
-      } else if (getProcessingEnv()
-          .getTypeUtils()
-          .isSubtype(erasure, getProcessingEnv().getTypeUtils().erasure(mapEntryType))) {
+      } else if (types.isSubtype(erasure, types.erasure(mapEntryType))) {
         // Map.Entry: Drop G and S bits
         removeGrowable(type);
         removeShrinkable(type);
-      } else if (getProcessingEnv()
-          .getTypeUtils()
-          .isSubtype(erasure, getProcessingEnv().getTypeUtils().erasure(iteratorType))) {
+      } else if (types.isSubtype(erasure, types.erasure(iteratorType))) {
         // Iterator: Drop G and R bits
         removeGrowable(type);
         removeReplaceable(type);
@@ -187,6 +212,8 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     }
   }
 
+  // The text about "bits" comes out of the blue.  It should have documentation, or it should
+  // cross-reference documentation.
   // Helper to remove 'Grow' capability (bit 100)
   private void removeGrowable(AnnotatedTypeMirror type) {
     if (type.hasPrimaryAnnotation(GROWABLE)) { // 100

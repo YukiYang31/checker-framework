@@ -7,8 +7,8 @@ import org.checkerframework.framework.qual.PolymorphicQualifier;
 /**
  * A polymorphic qualifier for modifiability.
  *
- * <p>Use on methods that preserve or transfer modifiability — for example, {@code List.subList()},
- * {@code iterator()}, or {@code stream()}.
+ * <p>Use on methods that preserve or transfer modifiability &mdash; for example, {@code
+ * List.subList()}, {@code iterator()}, or {@code stream()}.
  *
  * <p>The same qualifier that appears on the receiver will also appear on the return type (and
  * possibly parameters). For example:
@@ -21,6 +21,9 @@ import org.checkerframework.framework.qual.PolymorphicQualifier;
  *
  * If the receiver is {@code @Unmodifiable}, the return is {@code @Unmodifiable}. If the receiver is
  * {@code @Modifiable}, the return is {@code @Modifiable}.
+ *
+ * @checker_framework.manual #modifiability-checker Modifiability Checker
+ * @checker_framework.manual #qualifier-polymorphism Qualifier polymorphism
  */
 @PolymorphicQualifier(UnknownModifiability.class)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})

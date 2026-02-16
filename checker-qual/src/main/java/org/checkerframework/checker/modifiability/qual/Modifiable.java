@@ -8,8 +8,10 @@ import java.lang.annotation.Target;
 import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * Calling all mutating operations such as {@code add}, {@code remove}, {@code clear}, etc. on this
+ * Calling mutating operations such as {@code add}, {@code remove}, {@code clear}, etc. on this
  * collection will not result in throwing {@link UnsupportedOperationException}.
+ *
+ * <p>MDE: Mention the non-guarantee, as is done for other qualifiers.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */

@@ -7,13 +7,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that this method will always throw {@link UnsupportedOperationException} when called.
- *
- * <p>This is a declaration annotation.
+ * Indicates that the annotated method always throws {@link UnsupportedOperationException} when
+ * called.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
-public @interface WillThrowUOE {}
+public @interface ThrowsUOE {}

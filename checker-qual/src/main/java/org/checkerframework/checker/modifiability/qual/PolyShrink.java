@@ -10,10 +10,12 @@ import org.checkerframework.framework.qual.PolymorphicQualifier;
 /**
  * A polymorphic qualifier for modifiability that preserves the shrink capability.
  *
- * <p>Use on methods that preserve shrinkability — for example, {@code Map.keySet()}.
+ * <p>Use on methods that preserve shrinkability &mdash; for example, {@code Map.keySet()}.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  *     <p>TODO: need to implement
+ * @checker_framework.manual #modifiability-checker Modifiability Checker
+ * @checker_framework.manual #qualifier-polymorphism Qualifier polymorphism
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

@@ -7,8 +7,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The collection is known to be unmodifiable: calling a mutating method such as {@code add} or
- * {@code remove} will always throw {@link UnsupportedOperationException}.
+ * The collection is known to be unmodifiable. Calling a mutating (growing, shrinking, or replacing)
+ * method such as {@code add} or {@code remove} always throws {@link UnsupportedOperationException}.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */
