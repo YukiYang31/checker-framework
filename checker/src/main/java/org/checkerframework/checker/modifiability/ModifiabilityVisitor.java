@@ -34,6 +34,11 @@ public class ModifiabilityVisitor extends BaseTypeVisitor<BaseAnnotatedTypeFacto
   // exist.)
   // Suppress the framework's "constructor result must be TOP" check.
   // For Modifiability, constructors may legitimately produce @Modifiable.
+  // By default, the BaseTypeChecker requires constructors to return the top type
+  // (here @UnknownModifiability). However, many collection constructors (like new ArrayList())
+  // produce a @Modifiable object, which is a subtype of @UnknownModifiability.
+  // We want to allow this so that we can use these objects for mutation without
+  // explicit casting or annotations.
   @Override
   protected void checkConstructorResult(
       AnnotatedExecutableType constructorType, ExecutableElement constructorElement) {}

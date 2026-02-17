@@ -35,20 +35,20 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
   /** The {@code Collection.iterator()} method. */
   private final ExecutableElement iteratorMethodElement;
 
-  /** The {@code java.util.Set} type. */
-  private final TypeMirror setType;
+  /** The erased {@code java.util.Set} type. */
+  private final TypeMirror setErasure;
 
-  /** The {@code java.util.Queue} type. */
-  private final TypeMirror queueType;
+  /** The erased {@code java.util.Queue} type. */
+  private final TypeMirror queueErasure;
 
-  /** The {@code java.util.LinkedList} type. */
-  private final TypeMirror linkedListType;
+  /** The erased {@code java.util.LinkedList} type. */
+  private final TypeMirror linkedListErasure;
 
-  /** The {@code java.util.Map.Entry} type. */
-  private final TypeMirror mapEntryType;
+  /** The erased {@code java.util.Map.Entry} type. */
+  private final TypeMirror mapEntryErasure;
 
-  /** The {@code java.util.Iterator} type. */
-  private final TypeMirror iteratorType;
+  /** The erased {@code java.util.Iterator} type. */
+  private final TypeMirror iteratorErasure;
 
   /** The {@code @}{@link UnknknownModifiability} qualifier. */
   private final AnnotationMirror UNKNOWN_MODIFIABILITY;
@@ -85,11 +85,15 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     this.iteratorMethodElement =
         TreeUtils.getMethod("java.lang.Iterable", "iterator", 0, processingEnv);
     // Cache types
-    this.setType = getElementUtils().getTypeElement("java.util.Set").asType();
-    this.queueType = getElementUtils().getTypeElement("java.util.Queue").asType();
-    this.linkedListType = getElementUtils().getTypeElement("java.util.LinkedList").asType();
-    this.mapEntryType = getElementUtils().getTypeElement("java.util.Map.Entry").asType();
-    this.iteratorType = getElementUtils().getTypeElement("java.util.Iterator").asType();
+    Types types = getProcessingEnv().getTypeUtils();
+    this.setErasure = types.erasure(getElementUtils().getTypeElement("java.util.Set").asType());
+    this.queueErasure = types.erasure(getElementUtils().getTypeElement("java.util.Queue").asType());
+    this.linkedListErasure =
+        types.erasure(getElementUtils().getTypeElement("java.util.LinkedList").asType());
+    this.mapEntryErasure =
+        types.erasure(getElementUtils().getTypeElement("java.util.Map.Entry").asType());
+    this.iteratorErasure =
+        types.erasure(getElementUtils().getTypeElement("java.util.Iterator").asType());
 
     // Cache annotation mirrors for performance.
     this.UNKNOWN_MODIFIABILITY =
@@ -128,10 +132,9 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
    * <p>If a collection is {@code @Unmodifiable}, its iterator should also be treated as
    * {@code @Unmodifiable} (meaning {@code remove()} cannot be called).
    *
-   * <p>MDE: The below looks wrong. UnknownModifiability does not permit any mutations.
-   *
-   * <p>If a collection is {@code @Modifiable}, its iterator is {@code @UnknownModifiability} (the
-   * default behavior), which still permits calling {@code remove()}.
+   * <p>If a collection is {@code @Modifiable}, its iterator can be either Modifiable or
+   * Unmodifiable, depending on the iterator's implementation. To be conservative, we treat it as
+   * {@code @UnknownModifiability}, which is a supertype of both.
    */
   @Override
   public ParameterizedExecutableType methodFromUse(
@@ -143,7 +146,6 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     ParameterizedExecutableType mType =
         super.methodFromUse(tree, methodElt, receiverType, inferTypeArgs);
 
-    // MDE: Explain why using a @Poly qualifier does not work.
     // Special handling for the iterator() method.
     // We want the modifiability of the Iterator to match the modifiability of the
     // Collection.
@@ -180,8 +182,7 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     public Void visitDeclared(AnnotatedDeclaredType type, Void p) {
       super.visitDeclared(type, p);
 
-      // MDE: Does this `if` statement handle explicit bottom?  The comment says it does.
-      // Skip if polymorphic or explicit bottom.
+      // Skip if polymorphic.
       if (type.hasPrimaryAnnotation(POLY_MODIFIABLE)) {
         return null;
       }
@@ -190,19 +191,16 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
       Types types = getProcessingEnv().getTypeUtils();
       TypeMirror erasure = types.erasure(underlyingType);
 
-      // MDE: Rather than inefficiently and verbosely calling (e.g.) `types.erasure(setType)`
-      // every time that `visitDeclared` is called, that value should be stored as a field of the
-      // class.
-      if (types.isSubtype(erasure, types.erasure(setType))
-          || (types.isSubtype(erasure, types.erasure(queueType))
-              && !types.isSubtype(erasure, types.erasure(linkedListType)))) {
+      if (types.isSubtype(erasure, setErasure)
+          || (types.isSubtype(erasure, queueErasure)
+              && !types.isSubtype(erasure, linkedListErasure))) {
         // Set or Queue (but not LinkedList): Drop R bit
         removeReplaceable(type);
-      } else if (types.isSubtype(erasure, types.erasure(mapEntryType))) {
+      } else if (types.isSubtype(erasure, mapEntryErasure)) {
         // Map.Entry: Drop G and S bits
         removeGrowable(type);
         removeShrinkable(type);
-      } else if (types.isSubtype(erasure, types.erasure(iteratorType))) {
+      } else if (types.isSubtype(erasure, iteratorErasure)) {
         // Iterator: Drop G and R bits
         removeGrowable(type);
         removeReplaceable(type);

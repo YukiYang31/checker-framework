@@ -1,6 +1,6 @@
 \chapterAndLabel{Modifiability Checker}{modifiability-checker}
 
-In Java, an \emp{optional} method is one that a class may or may not
+In Java, an \emph{optional} method is one that a class may or may not
 support.  If the subclass does not support the method, then calling the
 method throws \<UnsupportedOperationException>.  Thus, whenever a client
 calls an optional method, there is a possibility of an exception.  The
@@ -44,12 +44,12 @@ A collection can be modified in three different ways:
 \textbf{Grow}, \textbf{Shrink}, and \textbf{Replace}.
 \begin{itemize}
     \item \textbf{Grow}: The collection can grow by adding new elements
-      (\<add>, \<addAll>, \ldots).
+      (\<add>, \<addAll>, \<offer>, \<addFirst>, \<addLast>, \<ListIterator.add>, \ldots).
     \item \textbf{Shrink}: The collection can shrink by removing
-      existing elements (\<remove>, \<removeAll>, \<clear>, \<retainAll>, \ldots).
+      existing elements (\<remove>, \<removeAll>, \<clear>, \<retainAll>, \<poll>, \<pop>, \<Iterator.remove>,  \ldots).
     \item \textbf{Replace}: The collection can replace existing
-      elements with new values at specific locations/keys (\<set>, \<replaceAll>,
-      \<setValue>, \ldots).
+      elements with new values at specific locations/keys (\<List.set>, \<Map.replace>, \<Map.replaceAll>,
+       \<ListIterator.set>,  \<Collections.sort>, \<Map.Entry.setValue>, \ldots).
 \end{itemize}
 
 To run the Modifiability Checker:
@@ -196,9 +196,37 @@ including the receiver).
     determined by non-polymorphic qualifiers from
     Figure~\ref{fig-modifiability-lattice}.
 
-    % MDE: Specify what happens if *both* a polymorphic and a
-    % non-polymorphic qualifier are specified, such as both @PolyShrink and
-    % @Modifiable.  Add tests to verify the behavior.
+   If \code{@PolyShrink} is the only modifiability qualifier present on a return
+type, the capabilities for Grow and Replace default to not guaranteed. The Shrink capability is dynamically determined by the
+argument.
+
+For example, consider the method:
+\begin{Verbatim}
+    @PolyShrink Set<K> keySet(@PolyShrink Map<K, V> self)
+\end{Verbatim}
+
+The resulting type of the returned set depends on the input map as follows:
+\begin{itemize}
+    \item If the map is \code{@Modifiable}, \code{@ShrinkReplace}, \code{@GrowShrink}, or \code{@Shrinkable} the returned set is
+    \code{@Shrinkable}.
+    \item If the map is \code{@Growable}, \code{@GrowReplace}, \code{@Replaceable} or \code{@Unmodifiable}, the returned set is
+    \code{@Unmodifiable}.
+\end{itemize}
+
+If both a polymorphic qualifier and a non-polymorphic qualifier are specified on
+a return type, the capabilities are additive. The non-polymorphic
+qualifier defines the base capabilities (the ``floor'') guaranteed for the
+return type, while the polymorphic qualifier preserves the specific shrink
+capability from the argument.
+
+For example, a method annotated with \code{@PolyShrink @Growable} returns
+a \code{@GrowShrink} collection if the argument is \code{@Shrinkable},
+but returns a \code{@Growable} collection if the argument is
+\code{@Unmodifiable}. If a return type is annotated with both
+\code{@PolyShrink} and \code{@Modifiable}, the \code{@PolyShrink}
+annotation is redundant because \code{@Modifiable} already guarantees
+shrinkability.
+
 \end{description}
 
 \subsectionAndLabel{Modifiability method annotations}{modifiability-method-annotations}
@@ -218,47 +246,7 @@ method annotated with \code{@ThrowsUOE}.
 
 \end{description}
 
-% TODO:
-% Each annotation’s Javadoc should include a precise description and an example
-% use, and should link back to this chapter using
-% \code{@checker\_framework.manual \#modifiability-checker Modifiability Checker}.
 
-\sectionAndLabel{What the Modifiability Checker checks}{modifiability-rules}
-
-% MDE: I don't think that the notion of "capability" is necessary or
-% useful.  It is just extra jargon that users need to understand.  Likewise
-% for naming the bits as G, S, and R.
-
-% MDE: Much of this section duplicates information that is present
-% elsewhere.  Eliminate the duplication and put related information
-% together.
-
-The Modifiability Checker enforces that mutating methods are only called on
-collections that have the required modifiability capability.
-
-A \emph{mutating method} is any method that may change the size or contents of a
-collection.
-When annotating a method signature, the \textbf{receiver} (\code{this}) must be annotated with the minimum capabilities (G, S, R bits) required to perform the operation.
-
-\begin{itemize}
-    \item \textbf{Grow (G)}: If the method increases the size of the collection, the receiver requires \code{@Growable} (G=1).
-    Examples: \code{add}, \code{addAll}, \code{offer}, \code{addFirst}, \code{addLast}, \code{ListIterator.add}.
-
-    \item \textbf{Shrink (S)}: If the method decreases the size (or removes elements), the receiver requires \code{@Shrinkable} (S=1).
-    Examples: \code{remove}, \code{removeAll}, \code{retainAll}, \code{clear}, \code{poll}, \code{pop}, \code{Iterator.remove}.
-
-    \item \textbf{Replace (R)}: If the method updates an existing element \emph{at a specific location/key}, the receiver requires \code{@Replaceable} (R=1).
-    Examples: \code{List.set}, \code{ListIterator.set}, \code{Map.replace}, \code{Map.replaceAll}, \code{Collections.sort}, \code{Map.Entry.setValue}.
-
-    \item \textbf{Combined Requirements}:
-    \begin{itemize}
-        \item \code{Map.put(K, V)}: Can grow OR replace. Requirement: \code{@GrowReplace} (G=1, R=1).
-        \item \code{Map.compute(...)} / \code{merge(...)}: Can grow, shrink, or replace. Requirement: \code{@Modifiable} (G=1, S=1, R=1).
-    \end{itemize}
-
-    \item \textbf{Read-Only Operations}: If the method does not modify the structure or elements of the collection, no specific capabilities are required. The receiver can be \code{@UnknownModifiability}.
-    Examples: \code{get}, \code{contains}, \code{size}, \code{isEmpty}.
-\end{itemize}
 
 \sectionAndLabel{Examples}{modifiability-examples}
 
