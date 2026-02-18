@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.framework.qual.RelevantJavaTypes;
+import org.checkerframework.framework.qual.StubFiles;
 import org.checkerframework.framework.source.SuppressWarningsPrefix;
 
 /**
@@ -25,6 +26,7 @@ import org.checkerframework.framework.source.SuppressWarningsPrefix;
   Map.Entry.class,
   Collections.class
 })
+@StubFiles({"ical4j.astub"})
 @SuppressWarningsPrefix({"modifiable", "unmodifiable"})
 public class ModifiabilityChecker extends BaseTypeChecker {
   /** Creates a Modifiability checker. */
