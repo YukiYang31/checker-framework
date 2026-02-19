@@ -1,48 +1,45 @@
 package org.checkerframework.checker.modifiability;
 
-import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.AnnotatedTypeTree;
+import com.sun.source.tree.Tree;
+import com.sun.source.tree.VariableTree;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
-import org.checkerframework.checker.modifiability.qual.GrowReplace;
-import org.checkerframework.checker.modifiability.qual.GrowShrink;
 import org.checkerframework.checker.modifiability.qual.Growable;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
+import org.checkerframework.checker.modifiability.qual.PolyGrow;
 import org.checkerframework.checker.modifiability.qual.PolyModifiable;
+import org.checkerframework.checker.modifiability.qual.PolyReplace;
 import org.checkerframework.checker.modifiability.qual.PolyShrink;
-import org.checkerframework.checker.modifiability.qual.PolyShrinkGrow;
-import org.checkerframework.checker.modifiability.qual.PolyShrinkReplace;
 import org.checkerframework.checker.modifiability.qual.Replaceable;
-import org.checkerframework.checker.modifiability.qual.ShrinkReplace;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
+import org.checkerframework.checker.modifiability.qual.UnknownGrow;
 import org.checkerframework.checker.modifiability.qual.UnknownModifiability;
+import org.checkerframework.checker.modifiability.qual.UnknownReplace;
+import org.checkerframework.checker.modifiability.qual.UnknownShrink;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.framework.type.AnnotatedTypeFactory;
-import org.checkerframework.framework.type.AnnotatedTypeFactory.ParameterizedExecutableType;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
-import org.checkerframework.framework.type.poly.DefaultQualifierPolymorphism;
-import org.checkerframework.framework.type.poly.QualifierPolymorphism;
+import org.checkerframework.framework.type.treeannotator.ListTreeAnnotator;
+import org.checkerframework.framework.type.treeannotator.TreeAnnotator;
 import org.checkerframework.framework.type.typeannotator.ListTypeAnnotator;
 import org.checkerframework.framework.type.typeannotator.TypeAnnotator;
 import org.checkerframework.javacutil.AnnotationBuilder;
-import org.checkerframework.javacutil.AnnotationMirrorMap;
 import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.TreeUtils;
 
 /** The type factory for the Modifiability Checker. */
 public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
-
-  /** The {@code Collection.iterator()} method. */
-  private final ExecutableElement iteratorMethodElement;
 
   /** The erased {@code java.util.Set} type. */
   private final TypeMirror setErasure;
@@ -59,44 +56,53 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
   /** The erased {@code java.util.Iterator} type. */
   private final TypeMirror iteratorErasure;
 
-  /** The {@code @}{@link UnknknownModifiability} qualifier. */
-  private final AnnotationMirror UNKNOWN_MODIFIABILITY;
+  // ── Hierarchy qualifiers (9 total: 3 tops + 3 bottoms + 3 poly) ──────────
 
-  /** The {@code @}{@link Modifiable} qualifier. */
-  private final AnnotationMirror MODIFIABLE;
+  /** The {@code @}{@link UnknownGrow} qualifier (top of Grow hierarchy). */
+  private AnnotationMirror UNKNOWN_GROW;
 
-  /** The {@code @}{@link GrowShrink} qualifier. */
-  private final AnnotationMirror GROW_SHRINK;
+  /** The {@code @}{@link UnknownShrink} qualifier (top of Shrink hierarchy). */
+  private AnnotationMirror UNKNOWN_SHRINK;
 
-  /** The {@code @}{@link GrowReplace} qualifier. */
-  private final AnnotationMirror GROW_REPLACE;
+  /** The {@code @}{@link UnknownReplace} qualifier (top of Replace hierarchy). */
+  private AnnotationMirror UNKNOWN_REPLACE;
 
-  /** The {@code @}{@link ShrinkReplace} qualifier. */
-  private final AnnotationMirror SHRINK_REPLACE;
+  /** The {@code @}{@link Growable} qualifier (bottom of Grow hierarchy). */
+  private AnnotationMirror GROWABLE;
 
-  /** The {@code @}{@link ShrinkReplace} qualifier. */
-  private final AnnotationMirror GROWABLE;
+  /** The {@code @}{@link Shrinkable} qualifier (bottom of Shrink hierarchy). */
+  private AnnotationMirror SHRINKABLE;
 
-  /** The {@code @}{@link Growable} qualifier. */
-  private final AnnotationMirror SHRINKABLE;
+  /** The {@code @}{@link Replaceable} qualifier (bottom of Replace hierarchy). */
+  private AnnotationMirror REPLACEABLE;
 
-  /** The {@code @}{@link Replaceable} qualifier. */
-  private final AnnotationMirror REPLACEABLE;
-
-  /** The {@code @}{@link PolyModifiable} qualifier. */
-  private final AnnotationMirror POLY_MODIFIABLE;
+  /** The {@code @}{@link PolyGrow} qualifier. */
+  private AnnotationMirror POLY_GROW;
 
   /** The {@code @}{@link PolyShrink} qualifier. */
-  private final AnnotationMirror POLY_SHRINK;
+  private AnnotationMirror POLY_SHRINK;
+
+  /** The {@code @}{@link PolyReplace} qualifier. */
+  private AnnotationMirror POLY_REPLACE;
+
+  // ── Alias qualifiers (not in hierarchy; expanded by the tree annotator) ──
+
+  /** The {@code @}{@link Modifiable} alias annotation. */
+  private AnnotationMirror MODIFIABLE;
+
+  /** The {@code @}{@link Unmodifiable} alias annotation. */
+  private AnnotationMirror UNMODIFIABLE;
+
+  /** The {@code @}{@link UnknownModifiability} alias annotation. */
+  private AnnotationMirror UNKNOWN_MODIFIABILITY;
+
+  /** The {@code @}{@link PolyModifiable} alias annotation. */
+  private AnnotationMirror POLY_MODIFIABLE;
 
   @SuppressWarnings("this-escape")
   public ModifiabilityAnnotatedTypeFactory(BaseTypeChecker checker) {
     super(checker);
-    // Cache the Element for java.lang.Iterable.iterator() to allow fast comparisons
-    // later.
-    this.iteratorMethodElement =
-        TreeUtils.getMethod("java.lang.Iterable", "iterator", 0, processingEnv);
-    // Cache types
+    // Cache type erasures.
     Types types = getProcessingEnv().getTypeUtils();
     this.setErasure = types.erasure(getElementUtils().getTypeElement("java.util.Set").asType());
     this.queueErasure = types.erasure(getElementUtils().getTypeElement("java.util.Queue").asType());
@@ -107,78 +113,103 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     this.iteratorErasure =
         types.erasure(getElementUtils().getTypeElement("java.util.Iterator").asType());
 
-    // Cache annotation mirrors for performance.
-    this.UNKNOWN_MODIFIABILITY =
-        AnnotationBuilder.fromClass(getElementUtils(), UnknownModifiability.class);
-    this.MODIFIABLE = AnnotationBuilder.fromClass(getElementUtils(), Modifiable.class);
-    this.GROW_SHRINK = AnnotationBuilder.fromClass(getElementUtils(), GrowShrink.class);
-    this.GROW_REPLACE = AnnotationBuilder.fromClass(getElementUtils(), GrowReplace.class);
-    this.SHRINK_REPLACE = AnnotationBuilder.fromClass(getElementUtils(), ShrinkReplace.class);
+    postInit();
+  }
+
+  @Override
+  protected void postInit() {
+    super.postInit();
+    // Initialize annotation mirrors after the hierarchy is established.
+    this.UNKNOWN_GROW = AnnotationBuilder.fromClass(getElementUtils(), UnknownGrow.class);
+    this.UNKNOWN_SHRINK = AnnotationBuilder.fromClass(getElementUtils(), UnknownShrink.class);
+    this.UNKNOWN_REPLACE = AnnotationBuilder.fromClass(getElementUtils(), UnknownReplace.class);
     this.GROWABLE = AnnotationBuilder.fromClass(getElementUtils(), Growable.class);
     this.SHRINKABLE = AnnotationBuilder.fromClass(getElementUtils(), Shrinkable.class);
     this.REPLACEABLE = AnnotationBuilder.fromClass(getElementUtils(), Replaceable.class);
-    this.POLY_MODIFIABLE = AnnotationBuilder.fromClass(getElementUtils(), PolyModifiable.class);
+    this.POLY_GROW = AnnotationBuilder.fromClass(getElementUtils(), PolyGrow.class);
     this.POLY_SHRINK = AnnotationBuilder.fromClass(getElementUtils(), PolyShrink.class);
-
-    addAliasedTypeAnnotation(Unmodifiable.class, UNKNOWN_MODIFIABILITY);
-    postInit();
+    this.POLY_REPLACE = AnnotationBuilder.fromClass(getElementUtils(), PolyReplace.class);
+    this.MODIFIABLE = AnnotationBuilder.fromClass(getElementUtils(), Modifiable.class);
+    this.UNMODIFIABLE = AnnotationBuilder.fromClass(getElementUtils(), Unmodifiable.class);
+    this.UNKNOWN_MODIFIABILITY =
+        AnnotationBuilder.fromClass(getElementUtils(), UnknownModifiability.class);
+    this.POLY_MODIFIABLE = AnnotationBuilder.fromClass(getElementUtils(), PolyModifiable.class);
   }
 
   @Override
   protected Set<Class<? extends Annotation>> createSupportedTypeQualifiers() {
     return new LinkedHashSet<>(
         Arrays.asList(
-            UnknownModifiability.class,
-            Modifiable.class,
-            PolyModifiable.class,
-            GrowReplace.class,
-            GrowShrink.class,
+            // Grow hierarchy
+            UnknownGrow.class,
             Growable.class,
+            PolyGrow.class,
+            // Shrink hierarchy
+            UnknownShrink.class,
+            Shrinkable.class,
+            PolyShrink.class,
+            // Replace hierarchy
+            UnknownReplace.class,
             Replaceable.class,
-            ShrinkReplace.class,
-            Shrinkable.class));
+            PolyReplace.class));
   }
 
   /**
-   * Refines the return type of the {@code iterator()} method based on the receiver's modifiability.
-   *
-   * <p>If a collection is {@code @Unmodifiable}, its iterator should also be treated as
-   * {@code @Unmodifiable} (meaning {@code remove()} cannot be called).
-   *
-   * <p>If a collection is {@code @Modifiable}, its iterator can be either Modifiable or
-   * Unmodifiable, depending on the iterator's implementation. To be conservative, we treat it as
-   * {@code @UnknownModifiability}, which is a supertype of both.
+   * Adds a tree annotator that expands alias annotations ({@code @Modifiable},
+   * {@code @Unmodifiable}, {@code @UnknownModifiability}, {@code @PolyModifiable}) into their
+   * constituent qualifiers across all three hierarchies.
    */
   @Override
-  public ParameterizedExecutableType methodFromUse(
-      ExpressionTree tree,
-      ExecutableElement methodElt,
-      AnnotatedTypeMirror receiverType,
-      boolean inferTypeArgs) {
+  protected TreeAnnotator createTreeAnnotator() {
+    return new ListTreeAnnotator(
+        new ModifiabilityAliasAnnotator(this), super.createTreeAnnotator());
+  }
 
-    ParameterizedExecutableType mType =
-        super.methodFromUse(tree, methodElt, receiverType, inferTypeArgs);
-
-    // Special handling for the iterator() method.
-    // We want the modifiability of the Iterator to match the modifiability of the
-    // Collection.
-    if (TreeUtils.isMethodInvocation(tree, iteratorMethodElement, processingEnv)) {
-
-      AnnotatedTypeMirror returnType = mType.executableType.getReturnType();
-
-      if (receiverType.hasPrimaryAnnotation(Unmodifiable.class)) {
-        // Collection.iterator() on an @Unmodifiable collection returns an @Unmodifiable
-        // Iterator.
-        returnType.replaceAnnotation(UNKNOWN_MODIFIABILITY);
-      } else if (receiverType.hasPrimaryAnnotation(Modifiable.class)) {
-        // Collection.iterator() on a @Modifiable collection returns an
-        // @UnknownModifiability Iterator
-        // (defaulting to bottom in this hierarchy is treated as safe for use).
-        returnType.replaceAnnotation(UNKNOWN_MODIFIABILITY);
-      }
+  /**
+   * Expands alias annotations written in source code into their equivalent multi-hierarchy
+   * qualifiers:
+   *
+   * <ul>
+   *   <li>{@code @Modifiable} → {@code @Growable @Shrinkable @Replaceable}
+   *   <li>{@code @Unmodifiable} or {@code @UnknownModifiability} →
+   *       {@code @UnknownGrow @UnknownShrink @UnknownReplace}
+   *   <li>{@code @PolyModifiable} → {@code @PolyGrow @PolyShrink @PolyReplace}
+   * </ul>
+   */
+  private class ModifiabilityAliasAnnotator extends TreeAnnotator {
+    public ModifiabilityAliasAnnotator(AnnotatedTypeFactory factory) {
+      super(factory);
     }
 
-    return mType;
+    /**
+     * Expands alias annotations found in the given list onto the given type.
+     *
+     * @param rawAnnos raw annotations from the source tree
+     * @param type the type to modify
+     */
+    private void expandAliases(
+        List<? extends AnnotationMirror> rawAnnos, AnnotatedTypeMirror type) {
+      for (AnnotationMirror anno : rawAnnos) {
+        if (AnnotationUtils.areSame(anno, MODIFIABLE)) {
+          type.replaceAnnotation(GROWABLE);
+          type.replaceAnnotation(SHRINKABLE);
+          type.replaceAnnotation(REPLACEABLE);
+          break;
+        } else if (AnnotationUtils.areSame(anno, UNMODIFIABLE)
+            || AnnotationUtils.areSame(anno, UNKNOWN_MODIFIABILITY)) {
+          type.replaceAnnotation(UNKNOWN_GROW);
+          type.replaceAnnotation(UNKNOWN_SHRINK);
+          type.replaceAnnotation(UNKNOWN_REPLACE);
+          break;
+        } else if (AnnotationUtils.areSame(anno, POLY_MODIFIABLE)) {
+          type.replaceAnnotation(POLY_GROW);
+          type.replaceAnnotation(POLY_SHRINK);
+          type.replaceAnnotation(POLY_REPLACE);
+          break;
+        }
+      }
+      return super.visitAnnotatedType(node, type);
+    }
   }
 
   @Override
@@ -186,6 +217,16 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     return new ListTypeAnnotator(new ModifiabilityTypeAnnotator(this), super.createTypeAnnotator());
   }
 
+  /**
+   * Removes capabilities that cannot be supported by structural constraints of the collection type:
+   *
+   * <ul>
+   *   <li>Set or Queue (not LinkedList): remove Replace capability → set Replace to
+   *       {@code @UnknownReplace}
+   *   <li>Map.Entry: remove Grow and Shrink capabilities
+   *   <li>Iterator: remove Grow and Replace capabilities
+   * </ul>
+   */
   private class ModifiabilityTypeAnnotator extends TypeAnnotator {
     public ModifiabilityTypeAnnotator(ModifiabilityAnnotatedTypeFactory factory) {
       super(factory);
@@ -195,8 +236,10 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     public Void visitDeclared(AnnotatedDeclaredType type, Void p) {
       super.visitDeclared(type, p);
 
-      // Skip if polymorphic.
-      if (type.hasPrimaryAnnotation(POLY_MODIFIABLE) || type.hasPrimaryAnnotation(POLY_SHRINK)) {
+      // Skip structural refinement for polymorphic types.
+      if (type.hasPrimaryAnnotation(POLY_GROW)
+          || type.hasPrimaryAnnotation(POLY_SHRINK)
+          || type.hasPrimaryAnnotation(POLY_REPLACE)) {
         return null;
       }
 
@@ -207,14 +250,14 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
       if (types.isSubtype(erasure, setErasure)
           || (types.isSubtype(erasure, queueErasure)
               && !types.isSubtype(erasure, linkedListErasure))) {
-        // Set or Queue (but not LinkedList): Drop R bit
+        // Set or Queue (but not LinkedList): no replace methods → remove Replace capability.
         removeReplaceable(type);
       } else if (types.isSubtype(erasure, mapEntryErasure)) {
-        // Map.Entry: Drop G and S bits
+        // Map.Entry: no grow or shrink methods → remove both capabilities.
         removeGrowable(type);
         removeShrinkable(type);
       } else if (types.isSubtype(erasure, iteratorErasure)) {
-        // Iterator: Drop G and R bits
+        // Iterator: no grow or replace methods → remove both capabilities.
         removeGrowable(type);
         removeReplaceable(type);
       }
@@ -223,96 +266,26 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     }
   }
 
-  // The text about "bits" comes out of the blue.  It should have documentation, or it should
-  // cross-reference documentation.
-  // Helper to remove 'Grow' capability (bit 100)
+  /**
+   * Removes the Grow capability by setting the Grow hierarchy qualifier to {@code @UnknownGrow}.
+   */
   private void removeGrowable(AnnotatedTypeMirror type) {
-    if (type.hasPrimaryAnnotation(GROWABLE)) { // 100
-      type.replaceAnnotation(UNKNOWN_MODIFIABILITY); // 000
-    } else if (type.hasPrimaryAnnotation(GROW_SHRINK)) { // 110
-      type.replaceAnnotation(SHRINKABLE); // 010
-    } else if (type.hasPrimaryAnnotation(GROW_REPLACE)) { // 101
-      type.replaceAnnotation(REPLACEABLE); // 001
-    } else if (type.hasPrimaryAnnotation(MODIFIABLE)) { // 111
-      type.replaceAnnotation(SHRINK_REPLACE); // 011
-    }
+    type.replaceAnnotation(UNKNOWN_GROW);
   }
 
-  // Helper to remove 'Shrink' capability (bit 010)
+  /**
+   * Removes the Shrink capability by setting the Shrink hierarchy qualifier to
+   * {@code @UnknownShrink}.
+   */
   private void removeShrinkable(AnnotatedTypeMirror type) {
-    if (type.hasPrimaryAnnotation(SHRINKABLE)) { // 010
-      type.replaceAnnotation(UNKNOWN_MODIFIABILITY); // 000
-    } else if (type.hasPrimaryAnnotation(GROW_SHRINK)) { // 110
-      type.replaceAnnotation(GROWABLE); // 100
-    } else if (type.hasPrimaryAnnotation(SHRINK_REPLACE)) { // 011
-      type.replaceAnnotation(REPLACEABLE); // 001
-    } else if (type.hasPrimaryAnnotation(MODIFIABLE)) { // 111
-      type.replaceAnnotation(GROW_REPLACE); // 101
-    }
+    type.replaceAnnotation(UNKNOWN_SHRINK);
   }
 
-  // Helper to remove 'Replace' capability (bit 001)
+  /**
+   * Removes the Replace capability by setting the Replace hierarchy qualifier to
+   * {@code @UnknownReplace}.
+   */
   private void removeReplaceable(AnnotatedTypeMirror type) {
-    if (type.hasPrimaryAnnotation(REPLACEABLE)) { // 001
-      type.replaceAnnotation(UNKNOWN_MODIFIABILITY); // 000
-    } else if (type.hasPrimaryAnnotation(GROW_REPLACE)) { // 101
-      type.replaceAnnotation(GROWABLE); // 100
-    } else if (type.hasPrimaryAnnotation(SHRINK_REPLACE)) { // 011
-      type.replaceAnnotation(SHRINKABLE); // 010
-    } else if (type.hasPrimaryAnnotation(MODIFIABLE)) { // 111
-      type.replaceAnnotation(GROW_SHRINK); // 110
-    }
-  }
-
-  @Override
-  protected QualifierPolymorphism createQualifierPolymorphism() {
-    return new ModifiabilityQualifierPolymorphism(getProcessingEnv(), this);
-  }
-
-  private class ModifiabilityQualifierPolymorphism extends DefaultQualifierPolymorphism {
-    public ModifiabilityQualifierPolymorphism(
-        ProcessingEnvironment env, AnnotatedTypeFactory factory) {
-      super(env, factory);
-      this.polyQuals.put(POLY_SHRINK, UNKNOWN_MODIFIABILITY);
-      this.polyQuals.put(
-          AnnotationBuilder.fromClass(factory.getElementUtils(), PolyShrinkGrow.class),
-          UNKNOWN_MODIFIABILITY);
-      this.polyQuals.put(
-          AnnotationBuilder.fromClass(factory.getElementUtils(), PolyShrinkReplace.class),
-          UNKNOWN_MODIFIABILITY);
-    }
-
-    @Override
-    public void replace(
-        AnnotatedTypeMirror type, AnnotationMirrorMap<AnnotationMirror> replacements) {
-      if (replacements == null || replacements.isEmpty()) {
-        super.replace(type, replacements);
-        return;
-      }
-      AnnotationMirrorMap<AnnotationMirror> newMap = new AnnotationMirrorMap<>(replacements);
-
-      // System.err.println("DEBUG: ModifiabilityQualifierPolymorphism.replace called.
-      // replacements=" + replacements);
-
-      for (java.util.Map.Entry<AnnotationMirror, AnnotationMirror> entry :
-          replacements.entrySet()) {
-        AnnotationMirror poly = entry.getKey();
-        AnnotationMirror qual = entry.getValue();
-
-        if (AnnotationUtils.areSame(poly, POLY_SHRINK)) {
-          // System.err.println("DEBUG: Processing PolyShrink. qual=" + qual);
-          if (getQualifierHierarchy().isSubtypeQualifiersOnly(qual, SHRINKABLE)) {
-            // System.err.println("DEBUG: qual is subtype of SHRINKABLE. replacing with
-            // SHRINKABLE.");
-            newMap.put(poly, SHRINKABLE);
-          } else {
-            // System.err.println("DEBUG: qual is NOT subtype of SHRINKABLE. replacing with
-            // UNKNOWN.");
-            newMap.put(poly, UNKNOWN_MODIFIABILITY);
-          }
-        }
-      }
-      super.replace(type, newMap);
-    }
+    type.replaceAnnotation(UNKNOWN_REPLACE);
   }
 }

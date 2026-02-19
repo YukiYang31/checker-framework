@@ -7,8 +7,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * The collection is known to be unmodifiable. Calling a mutating (growing, shrinking, or replacing)
- * method such as {@code add} or {@code remove} always throws {@link UnsupportedOperationException}.
+ * Convenience alias meaning {@code @UnknownGrow @UnknownShrink @UnknownReplace}. Calling any
+ * mutating operation on this collection (growing, shrinking, or replacing) will throw {@link
+ * UnsupportedOperationException}.
+ *
+ * <p>This annotation is not part of the type hierarchy; the Modifiability Checker expands it to
+ * {@code @UnknownGrow @UnknownShrink @UnknownReplace} on each annotated type.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */

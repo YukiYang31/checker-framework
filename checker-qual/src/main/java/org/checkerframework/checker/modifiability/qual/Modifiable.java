@@ -5,18 +5,18 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * Calling mutating operations such as {@code add}, {@code remove}, {@code clear}, etc. on this
- * collection will not result in throwing {@link UnsupportedOperationException}.
+ * Convenience alias meaning {@code @Growable @Shrinkable @Replaceable}. Calling grow, shrink, and
+ * replace operations such as {@code add}, {@code remove}, {@code set}, etc. on this collection will
+ * not result in throwing {@link UnsupportedOperationException}.
  *
- * <p>MDE: Mention the non-guarantee, as is done for other qualifiers.
+ * <p>This annotation is not part of the type hierarchy; the Modifiability Checker expands it to
+ * {@code @Growable @Shrinkable @Replaceable} on each annotated type.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
-@SubtypeOf({GrowShrink.class, GrowReplace.class, ShrinkReplace.class})
 public @interface Modifiable {}

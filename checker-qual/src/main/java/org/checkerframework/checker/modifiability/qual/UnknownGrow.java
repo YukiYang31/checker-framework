@@ -5,18 +5,20 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.checkerframework.framework.qual.DefaultQualifierInHierarchy;
 import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * Calling grow and shrink operations on this collection will not result in throwing {@link
- * UnsupportedOperationException}.
+ * The top qualifier in the Grow hierarchy. Represents an unknown or absent grow capability. The
+ * checker cannot determine whether the collection supports grow operations such as {@code add}.
  *
- * <p>No guarantees are made about replace operations.
+ * <p>This is the default qualifier for unannotated types in the Grow hierarchy.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
-@SubtypeOf({Growable.class, Shrinkable.class})
-public @interface GrowShrink {}
+@SubtypeOf({})
+@DefaultQualifierInHierarchy
+public @interface UnknownGrow {}

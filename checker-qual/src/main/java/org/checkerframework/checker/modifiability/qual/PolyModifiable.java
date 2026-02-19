@@ -2,16 +2,18 @@ package org.checkerframework.checker.modifiability.qual;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
-import org.checkerframework.framework.qual.PolymorphicQualifier;
 
 /**
- * A polymorphic qualifier for modifiability.
+ * Convenience alias meaning {@code @PolyGrow @PolyShrink @PolyReplace}. A polymorphic qualifier for
+ * all three modifiability hierarchies.
+ *
+ * <p>This annotation is not part of the type hierarchy; the Modifiability Checker expands it to
+ * {@code @PolyGrow @PolyShrink @PolyReplace} on each annotated type.
  *
  * <p>Use on methods that preserve or transfer modifiability &mdash; for example, {@code
  * List.subList()}, {@code iterator()}, or {@code stream()}.
  *
- * <p>The same qualifier that appears on the receiver will also appear on the return type (and
- * possibly parameters). For example:
+ * <p>For example:
  *
  * <pre><code>
  * class Example {
@@ -25,6 +27,5 @@ import org.checkerframework.framework.qual.PolymorphicQualifier;
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  * @checker_framework.manual #qualifier-polymorphism Qualifier polymorphism
  */
-@PolymorphicQualifier(UnknownModifiability.class)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
 public @interface PolyModifiable {}

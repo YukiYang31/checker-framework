@@ -1,177 +1,170 @@
-import org.checkerframework.checker.modifiability.qual.GrowReplace;
-import org.checkerframework.checker.modifiability.qual.GrowShrink;
 import org.checkerframework.checker.modifiability.qual.Growable;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.Replaceable;
-import org.checkerframework.checker.modifiability.qual.ShrinkReplace;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
+import org.checkerframework.checker.modifiability.qual.UnknownGrow;
 import org.checkerframework.checker.modifiability.qual.UnknownModifiability;
+import org.checkerframework.checker.modifiability.qual.UnknownReplace;
+import org.checkerframework.checker.modifiability.qual.UnknownShrink;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 
+/**
+ * Tests the three independent 2-element lattices of the Modifiability Checker.
+ *
+ * <p>Grow hierarchy: UnknownGrow (top/default) ← Growable (bottom) Shrink hierarchy: UnknownShrink
+ * (top/default) ← Shrinkable (bottom) Replace hierarchy: UnknownReplace (top/default) ← Replaceable
+ * (bottom)
+ *
+ * <p>An annotated type carries one qualifier per hierarchy. Assignment is valid if and only if the
+ * RHS is a subtype in every hierarchy simultaneously.
+ */
 class HierarchyTest {
-  void test(
-      @Modifiable Object mod,
-      @GrowShrink Object gs,
-      @GrowReplace Object gr,
-      @ShrinkReplace Object sr,
-      @Growable Object g,
-      @Shrinkable Object s,
-      @Replaceable Object r,
-      @UnknownModifiability Object unknown,
-      @Unmodifiable Object unmod) {
-    // ============================================================
-    // Assignments to @UnknownModifiability (Top)
-    // ============================================================
-    @UnknownModifiability Object u1 = mod;
-    @UnknownModifiability Object u2 = gs;
-    @UnknownModifiability Object u3 = gr;
-    @UnknownModifiability Object u4 = sr;
-    @UnknownModifiability Object u5 = g;
-    @UnknownModifiability Object u6 = s;
-    @UnknownModifiability Object u7 = r;
-    @UnknownModifiability Object u8 = unknown;
-    @UnknownModifiability Object u9 = unmod;
 
-    // ============================================================
-    // Assignments to @Unmodifiable (Alias to Top)
-    // ============================================================
-    @Unmodifiable Object um1 = mod;
-    @Unmodifiable Object um2 = gs;
-    @Unmodifiable Object um3 = gr;
-    @Unmodifiable Object um4 = sr;
-    @Unmodifiable Object um5 = g;
-    @Unmodifiable Object um6 = s;
-    @Unmodifiable Object um7 = r;
-    @Unmodifiable Object um8 = unknown;
-    @Unmodifiable Object um9 = unmod;
+  // ============================================================
+  // Grow hierarchy
+  // ============================================================
+  void testGrow(@Growable Object g, @UnknownGrow Object u) {
+    // Growable <: UnknownGrow (bottom to top is always OK)
+    @UnknownGrow Object u1 = g;
+    // :: error: (assignment)
+    @Growable Object g1 = u; // UnknownGrow !<: Growable
+  }
 
-    // ============================================================
-    // Assignments to @Growable (G)
-    // ============================================================
+  // ============================================================
+  // Shrink hierarchy
+  // ============================================================
+  void testShrink(@Shrinkable Object s, @UnknownShrink Object u) {
+    @UnknownShrink Object u1 = s;
+    // :: error: (assignment)
+    @Shrinkable Object s1 = u;
+  }
+
+  // ============================================================
+  // Replace hierarchy
+  // ============================================================
+  void testReplace(@Replaceable Object r, @UnknownReplace Object u) {
+    @UnknownReplace Object u1 = r;
+    // :: error: (assignment)
+    @Replaceable Object r1 = u;
+  }
+
+  // ============================================================
+  // Multi-annotation combinations (one qualifier per hierarchy)
+  // ============================================================
+  void testCombinations(
+      @Growable @Shrinkable @Replaceable Object gsr, // full capabilities
+      @Growable @Shrinkable Object gs, // Grow + Shrink only (Replace = UnknownReplace default)
+      @Growable @Replaceable Object gr, // Grow + Replace only (Shrink = UnknownShrink default)
+      @Shrinkable @Replaceable Object sr, // Shrink + Replace only (Grow = UnknownGrow default)
+      @Growable Object g, // Grow only
+      @Shrinkable Object s, // Shrink only
+      @Replaceable Object r, // Replace only
+      @UnknownGrow @UnknownShrink @UnknownReplace Object none) { // no capabilities
+
+    // ── Assignments to @Growable ──────────────────────────────
+    @Growable Object gv1 = gsr; // G+S+R <: G
+    @Growable Object gv2 = gs; // G+S <: G
+    @Growable Object gv3 = gr; // G+R <: G
+    // :: error: (assignment)
+    @Growable Object gv4 = sr; // S+R: no G bit
+    @Growable Object gv5 = g;
+    // :: error: (assignment)
+    @Growable Object gv6 = s;
+    // :: error: (assignment)
+    @Growable Object gv7 = r;
+    // :: error: (assignment)
+    @Growable Object gv8 = none;
+
+    // ── Assignments to @Shrinkable ────────────────────────────
+    @Shrinkable Object sv1 = gsr;
+    @Shrinkable Object sv2 = gs;
+    // :: error: (assignment)
+    @Shrinkable Object sv3 = gr; // G+R: no S bit
+    @Shrinkable Object sv4 = sr;
+    // :: error: (assignment)
+    @Shrinkable Object sv5 = g;
+    @Shrinkable Object sv6 = s;
+    // :: error: (assignment)
+    @Shrinkable Object sv7 = r;
+    // :: error: (assignment)
+    @Shrinkable Object sv8 = none;
+
+    // ── Assignments to @Replaceable ───────────────────────────
+    @Replaceable Object rv1 = gsr;
+    // :: error: (assignment)
+    @Replaceable Object rv2 = gs; // G+S: no R bit
+    @Replaceable Object rv3 = gr;
+    @Replaceable Object rv4 = sr;
+    // :: error: (assignment)
+    @Replaceable Object rv5 = g;
+    // :: error: (assignment)
+    @Replaceable Object rv6 = s;
+    @Replaceable Object rv7 = r;
+    // :: error: (assignment)
+    @Replaceable Object rv8 = none;
+
+    // ── Assignments to full @UnknownGrow @UnknownShrink @UnknownReplace (top in all) ──
+    @UnknownGrow
+    @UnknownShrink
+    @UnknownReplace
+    Object tv1 = gsr;
+    @UnknownGrow
+    @UnknownShrink
+    @UnknownReplace
+    Object tv2 = gs;
+    @UnknownGrow
+    @UnknownShrink
+    @UnknownReplace
+    Object tv3 = gr;
+    @UnknownGrow
+    @UnknownShrink
+    @UnknownReplace
+    Object tv4 = sr;
+    @UnknownGrow
+    @UnknownShrink
+    @UnknownReplace
+    Object tv5 = g;
+    @UnknownGrow
+    @UnknownShrink
+    @UnknownReplace
+    Object tv6 = s;
+    @UnknownGrow
+    @UnknownShrink
+    @UnknownReplace
+    Object tv7 = r;
+    @UnknownGrow
+    @UnknownShrink
+    @UnknownReplace
+    Object tv8 = none;
+  }
+
+  // ============================================================
+  // Alias annotations
+  // ============================================================
+  void testAliases(
+      @Modifiable Object mod, @Unmodifiable Object unmod, @UnknownModifiability Object unknown) {
+
+    // @Modifiable expands to @Growable @Shrinkable @Replaceable (full capabilities)
     @Growable Object g1 = mod;
-    @Growable Object g2 = gs;
-    @Growable Object g3 = gr;
-    // :: error: (assignment)
-    @Growable Object g4 = sr;
-    @Growable Object g5 = g;
-    // :: error: (assignment)
-    @Growable Object g6 = s;
-    // :: error: (assignment)
-    @Growable Object g7 = r;
-    // :: error: (assignment)
-    @Growable Object g8 = unknown;
-    // :: error: (assignment)
-    @Growable Object g9 = unmod;
-
-    // ============================================================
-    // Assignments to @Shrinkable (S)
-    // ============================================================
     @Shrinkable Object s1 = mod;
-    @Shrinkable Object s2 = gs;
-    // :: error: (assignment)
-    @Shrinkable Object s3 = gr;
-    @Shrinkable Object s4 = sr;
-    // :: error: (assignment)
-    @Shrinkable Object s5 = g;
-    @Shrinkable Object s6 = s;
-    // :: error: (assignment)
-    @Shrinkable Object s7 = r;
-    // :: error: (assignment)
-    @Shrinkable Object s8 = unknown;
-    // :: error: (assignment)
-    @Shrinkable Object s9 = unmod;
-
-    // ============================================================
-    // Assignments to @Replaceable (R)
-    // ============================================================
     @Replaceable Object r1 = mod;
-    // :: error: (assignment)
-    @Replaceable Object r2 = gs;
-    @Replaceable Object r3 = gr;
-    @Replaceable Object r4 = sr;
-    // :: error: (assignment)
-    @Replaceable Object r5 = g;
-    // :: error: (assignment)
-    @Replaceable Object r6 = s;
-    @Replaceable Object r7 = r;
-    // :: error: (assignment)
-    @Replaceable Object r8 = unknown;
-    // :: error: (assignment)
-    @Replaceable Object r9 = unmod;
 
-    // ============================================================
-    // Assignments to @GrowShrink (G, S)
-    // ============================================================
-    @GrowShrink Object gs1 = mod;
-    @GrowShrink Object gs2 = gs;
-    // :: error: (assignment)
-    @GrowShrink Object gs3 = gr;
-    // :: error: (assignment)
-    @GrowShrink Object gs4 = sr;
-    // :: error: (assignment)
-    @GrowShrink Object gs5 = g;
-    // :: error: (assignment)
-    @GrowShrink Object gs6 = s;
-    // :: error: (assignment)
-    @GrowShrink Object gs7 = r;
-    // :: error: (assignment)
-    @GrowShrink Object gs8 = unknown;
+    // @Unmodifiable / @UnknownModifiability expand to @UnknownGrow @UnknownShrink @UnknownReplace
+    @UnknownGrow Object ug1 = unmod;
+    @UnknownShrink Object us1 = unmod;
+    @UnknownReplace Object ur1 = unmod;
+    @UnknownGrow Object ug2 = unknown;
 
-    // ============================================================
-    // Assignments to @GrowReplace (G, R)
-    // ============================================================
-    @GrowReplace Object gr1 = mod;
-    // :: error: (assignment)
-    @GrowReplace Object gr2 = gs;
-    @GrowReplace Object gr3 = gr;
-    // :: error: (assignment)
-    @GrowReplace Object gr4 = sr;
-    // :: error: (assignment)
-    @GrowReplace Object gr5 = g;
-    // :: error: (assignment)
-    @GrowReplace Object gr6 = s;
-    // :: error: (assignment)
-    @GrowReplace Object gr7 = r;
-    // :: error: (assignment)
-    @GrowReplace Object gr8 = unknown;
+    // @Modifiable <: @Unmodifiable in every hierarchy
+    @Unmodifiable Object unmod1 = mod;
+    @UnknownModifiability Object unknown1 = mod;
 
-    // ============================================================
-    // Assignments to @ShrinkReplace (S, R)
-    // ============================================================
-    @ShrinkReplace Object sr1 = mod;
+    // @Unmodifiable !<: @Growable (top !<: bottom in Grow hierarchy)
     // :: error: (assignment)
-    @ShrinkReplace Object sr2 = gs;
-    // :: error: (assignment)
-    @ShrinkReplace Object sr3 = gr;
-    @ShrinkReplace Object sr4 = sr;
-    // :: error: (assignment)
-    @ShrinkReplace Object sr5 = g;
-    // :: error: (assignment)
-    @ShrinkReplace Object sr6 = s;
-    // :: error: (assignment)
-    @ShrinkReplace Object sr7 = r;
-    // :: error: (assignment)
-    @ShrinkReplace Object sr8 = unknown;
+    @Growable Object g2 = unmod;
 
-    // ============================================================
-    // Assignments to @Modifiable (Bottom)
-    // ============================================================
-    @Modifiable Object m1 = mod;
+    // @Unmodifiable !<: @Modifiable
     // :: error: (assignment)
-    @Modifiable Object m2 = gs;
-    // :: error: (assignment)
-    @Modifiable Object m3 = gr;
-    // :: error: (assignment)
-    @Modifiable Object m4 = sr;
-    // :: error: (assignment)
-    @Modifiable Object m5 = g;
-    // :: error: (assignment)
-    @Modifiable Object m6 = s;
-    // :: error: (assignment)
-    @Modifiable Object m7 = r;
-    // :: error: (assignment)
-    @Modifiable Object m8 = unknown;
-    // :: error: (assignment)
-    @Modifiable Object m9 = unmod;
+    @Modifiable Object mod1 = unmod;
   }
 }

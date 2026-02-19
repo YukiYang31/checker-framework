@@ -8,17 +8,15 @@ import java.lang.annotation.Target;
 import org.checkerframework.framework.qual.PolymorphicQualifier;
 
 /**
- * A polymorphic qualifier for modifiability that preserves the shrink capability.
+ * A polymorphic qualifier for the Shrink hierarchy that preserves the shrink capability.
  *
  * <p>Use on methods that preserve shrinkability &mdash; for example, {@code Map.keySet()}.
  *
- * @checker_framework.manual #modifiability-checker Modifiability Checker
- *     <p>TODO: need to implement
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  * @checker_framework.manual #qualifier-polymorphism Qualifier polymorphism
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
-@PolymorphicQualifier(UnknownModifiability.class)
+@PolymorphicQualifier(UnknownShrink.class)
 public @interface PolyShrink {}
