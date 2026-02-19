@@ -274,8 +274,12 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
         ProcessingEnvironment env, AnnotatedTypeFactory factory) {
       super(env, factory);
       this.polyQuals.put(POLY_SHRINK, UNKNOWN_MODIFIABILITY);
-      this.polyQuals.put(AnnotationBuilder.fromClass(factory.getElementUtils(), PolyShrinkGrow.class), UNKNOWN_MODIFIABILITY);
-      this.polyQuals.put(AnnotationBuilder.fromClass(factory.getElementUtils(), PolyShrinkReplace.class), UNKNOWN_MODIFIABILITY);
+      this.polyQuals.put(
+          AnnotationBuilder.fromClass(factory.getElementUtils(), PolyShrinkGrow.class),
+          UNKNOWN_MODIFIABILITY);
+      this.polyQuals.put(
+          AnnotationBuilder.fromClass(factory.getElementUtils(), PolyShrinkReplace.class),
+          UNKNOWN_MODIFIABILITY);
     }
 
     @Override
@@ -287,19 +291,23 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
       }
       AnnotationMirrorMap<AnnotationMirror> newMap = new AnnotationMirrorMap<>(replacements);
 
-      // System.err.println("DEBUG: ModifiabilityQualifierPolymorphism.replace called. replacements=" + replacements);
+      // System.err.println("DEBUG: ModifiabilityQualifierPolymorphism.replace called.
+      // replacements=" + replacements);
 
-      for (java.util.Map.Entry<AnnotationMirror, AnnotationMirror> entry : replacements.entrySet()) {
+      for (java.util.Map.Entry<AnnotationMirror, AnnotationMirror> entry :
+          replacements.entrySet()) {
         AnnotationMirror poly = entry.getKey();
         AnnotationMirror qual = entry.getValue();
 
         if (AnnotationUtils.areSame(poly, POLY_SHRINK)) {
           // System.err.println("DEBUG: Processing PolyShrink. qual=" + qual);
           if (getQualifierHierarchy().isSubtypeQualifiersOnly(qual, SHRINKABLE)) {
-            // System.err.println("DEBUG: qual is subtype of SHRINKABLE. replacing with SHRINKABLE.");
+            // System.err.println("DEBUG: qual is subtype of SHRINKABLE. replacing with
+            // SHRINKABLE.");
             newMap.put(poly, SHRINKABLE);
           } else {
-            // System.err.println("DEBUG: qual is NOT subtype of SHRINKABLE. replacing with UNKNOWN.");
+            // System.err.println("DEBUG: qual is NOT subtype of SHRINKABLE. replacing with
+            // UNKNOWN.");
             newMap.put(poly, UNKNOWN_MODIFIABILITY);
           }
         }
