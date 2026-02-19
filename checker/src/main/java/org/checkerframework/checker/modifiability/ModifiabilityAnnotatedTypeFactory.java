@@ -5,6 +5,7 @@ import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
@@ -14,6 +15,9 @@ import org.checkerframework.checker.modifiability.qual.GrowShrink;
 import org.checkerframework.checker.modifiability.qual.Growable;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.PolyModifiable;
+import org.checkerframework.checker.modifiability.qual.PolyShrink;
+import org.checkerframework.checker.modifiability.qual.PolyShrinkGrow;
+import org.checkerframework.checker.modifiability.qual.PolyShrinkReplace;
 import org.checkerframework.checker.modifiability.qual.Replaceable;
 import org.checkerframework.checker.modifiability.qual.ShrinkReplace;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
@@ -21,12 +25,17 @@ import org.checkerframework.checker.modifiability.qual.UnknownModifiability;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
 import org.checkerframework.common.basetype.BaseTypeChecker;
+import org.checkerframework.framework.type.AnnotatedTypeFactory;
 import org.checkerframework.framework.type.AnnotatedTypeFactory.ParameterizedExecutableType;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
+import org.checkerframework.framework.type.poly.DefaultQualifierPolymorphism;
+import org.checkerframework.framework.type.poly.QualifierPolymorphism;
 import org.checkerframework.framework.type.typeannotator.ListTypeAnnotator;
 import org.checkerframework.framework.type.typeannotator.TypeAnnotator;
 import org.checkerframework.javacutil.AnnotationBuilder;
+import org.checkerframework.javacutil.AnnotationMirrorMap;
+import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.TreeUtils;
 
 /** The type factory for the Modifiability Checker. */
@@ -77,6 +86,9 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
   /** The {@code @}{@link PolyModifiable} qualifier. */
   private final AnnotationMirror POLY_MODIFIABLE;
 
+  /** The {@code @}{@link PolyShrink} qualifier. */
+  private final AnnotationMirror POLY_SHRINK;
+
   @SuppressWarnings("this-escape")
   public ModifiabilityAnnotatedTypeFactory(BaseTypeChecker checker) {
     super(checker);
@@ -106,6 +118,7 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     this.SHRINKABLE = AnnotationBuilder.fromClass(getElementUtils(), Shrinkable.class);
     this.REPLACEABLE = AnnotationBuilder.fromClass(getElementUtils(), Replaceable.class);
     this.POLY_MODIFIABLE = AnnotationBuilder.fromClass(getElementUtils(), PolyModifiable.class);
+    this.POLY_SHRINK = AnnotationBuilder.fromClass(getElementUtils(), PolyShrink.class);
 
     addAliasedTypeAnnotation(Unmodifiable.class, UNKNOWN_MODIFIABILITY);
     postInit();
@@ -183,7 +196,7 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
       super.visitDeclared(type, p);
 
       // Skip if polymorphic.
-      if (type.hasPrimaryAnnotation(POLY_MODIFIABLE)) {
+      if (type.hasPrimaryAnnotation(POLY_MODIFIABLE) || type.hasPrimaryAnnotation(POLY_SHRINK)) {
         return null;
       }
 
@@ -248,6 +261,50 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
       type.replaceAnnotation(SHRINKABLE); // 010
     } else if (type.hasPrimaryAnnotation(MODIFIABLE)) { // 111
       type.replaceAnnotation(GROW_SHRINK); // 110
+    }
+  }
+
+  @Override
+  protected QualifierPolymorphism createQualifierPolymorphism() {
+    return new ModifiabilityQualifierPolymorphism(getProcessingEnv(), this);
+  }
+
+  private class ModifiabilityQualifierPolymorphism extends DefaultQualifierPolymorphism {
+    public ModifiabilityQualifierPolymorphism(
+        ProcessingEnvironment env, AnnotatedTypeFactory factory) {
+      super(env, factory);
+      this.polyQuals.put(POLY_SHRINK, UNKNOWN_MODIFIABILITY);
+      this.polyQuals.put(AnnotationBuilder.fromClass(factory.getElementUtils(), PolyShrinkGrow.class), UNKNOWN_MODIFIABILITY);
+      this.polyQuals.put(AnnotationBuilder.fromClass(factory.getElementUtils(), PolyShrinkReplace.class), UNKNOWN_MODIFIABILITY);
+    }
+
+    @Override
+    public void replace(
+        AnnotatedTypeMirror type, AnnotationMirrorMap<AnnotationMirror> replacements) {
+      if (replacements == null || replacements.isEmpty()) {
+        super.replace(type, replacements);
+        return;
+      }
+      AnnotationMirrorMap<AnnotationMirror> newMap = new AnnotationMirrorMap<>(replacements);
+
+      // System.err.println("DEBUG: ModifiabilityQualifierPolymorphism.replace called. replacements=" + replacements);
+
+      for (java.util.Map.Entry<AnnotationMirror, AnnotationMirror> entry : replacements.entrySet()) {
+        AnnotationMirror poly = entry.getKey();
+        AnnotationMirror qual = entry.getValue();
+
+        if (AnnotationUtils.areSame(poly, POLY_SHRINK)) {
+          // System.err.println("DEBUG: Processing PolyShrink. qual=" + qual);
+          if (getQualifierHierarchy().isSubtypeQualifiersOnly(qual, SHRINKABLE)) {
+            // System.err.println("DEBUG: qual is subtype of SHRINKABLE. replacing with SHRINKABLE.");
+            newMap.put(poly, SHRINKABLE);
+          } else {
+            // System.err.println("DEBUG: qual is NOT subtype of SHRINKABLE. replacing with UNKNOWN.");
+            newMap.put(poly, UNKNOWN_MODIFIABILITY);
+          }
+        }
+      }
+      super.replace(type, newMap);
     }
   }
 }
