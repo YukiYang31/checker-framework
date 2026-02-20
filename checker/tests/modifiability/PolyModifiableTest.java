@@ -1,17 +1,19 @@
 import java.util.List;
-import org.checkerframework.checker.modifiability.qual.GrowReplace;
-import org.checkerframework.checker.modifiability.qual.GrowShrink;
 import org.checkerframework.checker.modifiability.qual.Growable;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.PolyModifiable;
 import org.checkerframework.checker.modifiability.qual.Replaceable;
-import org.checkerframework.checker.modifiability.qual.ShrinkReplace;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
 import org.checkerframework.checker.modifiability.qual.UnknownModifiability;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 
+/**
+ * Tests @PolyModifiable, which expands to @PolyGrow @PolyShrink @PolyReplace and thus preserves all
+ * three capabilities independently.
+ */
 public class PolyModifiableTest {
-  // A simple polymorphic method
+
+  /** A simple polymorphic identity method that preserves all three capabilities. */
   @PolyModifiable
   List<String> identity(@PolyModifiable List<String> x) {
     return x;
@@ -19,9 +21,9 @@ public class PolyModifiableTest {
 
   void testPoly(
       @Modifiable List<String> mod,
-      @GrowShrink List<String> gs,
-      @GrowReplace List<String> gr,
-      @ShrinkReplace List<String> sr,
+      @Growable @Shrinkable List<String> gs, // Grow+Shrink; Replace = UnknownReplace (default)
+      @Growable @Replaceable List<String> gr, // Grow+Replace; Shrink = UnknownShrink
+      @Shrinkable @Replaceable List<String> sr, // Shrink+Replace; Grow = UnknownGrow
       @Growable List<String> g,
       @Shrinkable List<String> s,
       @Replaceable List<String> r,
@@ -29,79 +31,94 @@ public class PolyModifiableTest {
       @Unmodifiable List<String> unmod) {
 
     // ============================================================
-    // Identity on Modifiable (Bottom - 111)
+    // Identity on @Modifiable (G+S+R)
     // ============================================================
-    @Modifiable List<String> m1 = identity(mod); // OK
-    @UnknownModifiability List<String> m2 = identity(mod); // OK
+    @Modifiable List<String> m1 = identity(mod); // OK: poly resolves to G+S+R
+    @UnknownModifiability List<String> m2 = identity(mod); // OK: G+S+R <: top in all
 
     // ============================================================
-    // Identity on GrowShrink (110)
+    // Identity on @Growable @Shrinkable (G+S, R=UnknownReplace)
     // ============================================================
-    @GrowShrink List<String> gs1 = identity(gs); // OK
+    @Growable
+    @Shrinkable
+    List<String> gs1 = identity(gs); // OK
     // :: error: (assignment)
-    @Modifiable List<String> gs2 = identity(gs); // Error: GS (110) !<: Mod (111)
-    @Growable List<String> gs3 = identity(gs); // OK: GS (110) <: G (100)
-    @Shrinkable List<String> gs4 = identity(gs); // OK: GS (110) <: S (010)
+    @Modifiable List<String> gs2 = identity(gs); // Error: R=Unknown !<: Replaceable
+    @Growable List<String> gs3 = identity(gs); // OK: G+S+UnknownR <: G
+    @Shrinkable List<String> gs4 = identity(gs); // OK: G+S+UnknownR <: S
     // :: error: (assignment)
-    @Replaceable List<String> gs5 = identity(gs); // Error: GS (110) !<: R (001)
+    @Replaceable List<String> gs5 = identity(gs); // Error: UnknownR !<: Replaceable
 
     // ============================================================
-    // Identity on GrowReplace (101)
+    // Identity on @Growable @Replaceable (G+R, S=UnknownShrink)
     // ============================================================
-    @GrowReplace List<String> gr1 = identity(gr); // OK
+    @Growable
+    @Replaceable
+    List<String> gr1 = identity(gr); // OK
     // :: error: (assignment)
-    @Modifiable List<String> gr2 = identity(gr); // Error
+    @Modifiable List<String> gr2 = identity(gr); // Error: S=Unknown !<: Shrinkable
     @Growable List<String> gr3 = identity(gr); // OK
     // :: error: (assignment)
-    @Shrinkable List<String> gr4 = identity(gr); // Error
+    @Shrinkable List<String> gr4 = identity(gr); // Error: S=Unknown
     @Replaceable List<String> gr5 = identity(gr); // OK
 
     // ============================================================
-    // Identity on ShrinkReplace (011)
+    // Identity on @Shrinkable @Replaceable (S+R, G=UnknownGrow)
     // ============================================================
-    @ShrinkReplace List<String> sr1 = identity(sr); // OK
+    @Shrinkable
+    @Replaceable
+    List<String> sr1 = identity(sr); // OK
     // :: error: (assignment)
-    @Modifiable List<String> sr2 = identity(sr); // Error
+    @Modifiable List<String> sr2 = identity(sr); // Error: G=Unknown !<: Growable
     // :: error: (assignment)
-    @Growable List<String> sr3 = identity(sr); // Error
+    @Growable List<String> sr3 = identity(sr); // Error: G=Unknown
     @Shrinkable List<String> sr4 = identity(sr); // OK
     @Replaceable List<String> sr5 = identity(sr); // OK
 
     // ============================================================
-    // Identity on Growable (100)
+    // Identity on @Growable (G only; S=Unknown, R=Unknown)
     // ============================================================
     @Growable List<String> g1 = identity(g); // OK
     // :: error: (assignment)
-    @GrowShrink List<String> g2 = identity(g); // Error
+    @Growable
+    @Shrinkable
+    List<String> g2 = identity(g); // Error: S=Unknown
     // :: error: (assignment)
-    @Modifiable List<String> g3 = identity(g); // Error
+    @Modifiable List<String> g3 = identity(g); // Error: S=Unknown, R=Unknown
 
     // ============================================================
-    // Identity on Shrinkable (010)
+    // Identity on @Shrinkable (S only; G=Unknown, R=Unknown)
     // ============================================================
     @Shrinkable List<String> s1 = identity(s); // OK
     // :: error: (assignment)
-    @GrowShrink List<String> s2 = identity(s); // Error
+    @Growable
+    @Shrinkable
+    List<String> s2 = identity(s); // Error: G=Unknown
     // :: error: (assignment)
     @Modifiable List<String> s3 = identity(s); // Error
+
     // ============================================================
-    // Identity on Replaceable (001)
+    // Identity on @Replaceable (R only; G=Unknown, S=Unknown)
     // ============================================================
     @Replaceable List<String> r1 = identity(r); // OK
     // :: error: (assignment)
-    @GrowReplace List<String> r2 = identity(r); // Error
+    @Growable
+    @Replaceable
+    List<String> r2 = identity(r); // Error: G=Unknown
     // :: error: (assignment)
     @Modifiable List<String> r3 = identity(r); // Error
+
     // ============================================================
-    // Identity on UnknownModifiability (000 / Top)
+    // Identity on @UnknownModifiability (all tops)
     // ============================================================
     @UnknownModifiability List<String> u1 = identity(unknown); // OK
     // :: error: (assignment)
     @Modifiable List<String> u2 = identity(unknown); // Error
     // :: error: (assignment)
     @Growable List<String> u3 = identity(unknown); // Error
+
     // ============================================================
-    // Identity on Unmodifiable (000 / Top alias)
+    // Identity on @Unmodifiable (alias for all tops)
     // ============================================================
     @Unmodifiable List<String> unmod1 = identity(unmod); // OK
     // :: error: (assignment)

@@ -136,6 +136,47 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
     this.POLY_MODIFIABLE = AnnotationBuilder.fromClass(getElementUtils(), PolyModifiable.class);
   }
 
+  /**
+   * Expands alias annotations ({@code @Modifiable}, {@code @Unmodifiable},
+   * {@code @UnknownModifiability}, {@code @PolyModifiable}) found on the element's underlying
+   * {@link TypeMirror}. These alias annotations are not supported qualifiers, so they are dropped
+   * by the standard pipeline. This override recovers them from the raw type annotations.
+   *
+   * <p>This is critical for method parameters, whose types are resolved via the element-based path
+   * (not the tree-based path) when initializing the flow-sensitive store.
+   */
+  @Override
+  public void addComputedTypeAnnotations(Element element, AnnotatedTypeMirror type) {
+    super.addComputedTypeAnnotations(element, type);
+    expandAliasesFromTypeMirror(element.asType(), type);
+  }
+
+  /**
+   * Checks the given {@link TypeMirror} for alias annotations and expands them onto the given
+   * {@link AnnotatedTypeMirror}.
+   */
+  private void expandAliasesFromTypeMirror(TypeMirror typeMirror, AnnotatedTypeMirror type) {
+    for (AnnotationMirror anno : typeMirror.getAnnotationMirrors()) {
+      if (AnnotationUtils.areSame(anno, MODIFIABLE)) {
+        type.replaceAnnotation(GROWABLE);
+        type.replaceAnnotation(SHRINKABLE);
+        type.replaceAnnotation(REPLACEABLE);
+        return;
+      } else if (AnnotationUtils.areSame(anno, UNMODIFIABLE)
+          || AnnotationUtils.areSame(anno, UNKNOWN_MODIFIABILITY)) {
+        type.replaceAnnotation(UNKNOWN_GROW);
+        type.replaceAnnotation(UNKNOWN_SHRINK);
+        type.replaceAnnotation(UNKNOWN_REPLACE);
+        return;
+      } else if (AnnotationUtils.areSame(anno, POLY_MODIFIABLE)) {
+        type.replaceAnnotation(POLY_GROW);
+        type.replaceAnnotation(POLY_SHRINK);
+        type.replaceAnnotation(POLY_REPLACE);
+        return;
+      }
+    }
+  }
+
   @Override
   protected Set<Class<? extends Annotation>> createSupportedTypeQualifiers() {
     return new LinkedHashSet<>(
@@ -208,7 +249,26 @@ public class ModifiabilityAnnotatedTypeFactory extends BaseAnnotatedTypeFactory 
           break;
         }
       }
+    }
+
+    @Override
+    public Void visitAnnotatedType(AnnotatedTypeTree node, AnnotatedTypeMirror type) {
+      expandAliases(TreeUtils.annotationsFromTree(node), type);
       return super.visitAnnotatedType(node, type);
+    }
+
+    /**
+     * Handles alias expansion for variable declarations (local variables, fields, and parameters).
+     * The tree annotator is called with the {@link VariableTree}, not the inner {@link
+     * AnnotatedTypeTree}, so {@link #visitAnnotatedType} does not fire for these cases.
+     */
+    @Override
+    public Void visitVariable(VariableTree node, AnnotatedTypeMirror type) {
+      Tree typeTree = node.getType();
+      if (typeTree instanceof AnnotatedTypeTree) {
+        expandAliases(TreeUtils.annotationsFromTree((AnnotatedTypeTree) typeTree), type);
+      }
+      return super.visitVariable(node, type);
     }
   }
 
