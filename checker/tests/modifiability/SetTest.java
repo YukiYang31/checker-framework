@@ -36,16 +36,18 @@ class SetTest {
     // @Replaceable Set → Grow=Unknown, Shrink=Unknown, Replace=Unknown (R removed)
     // @Growable @Replaceable Set → Grow=Growable, Shrink=Unknown, Replace=Unknown (R removed)
     @Growable Set<String> g1 = growReplace; // OK: Grow still intact
-    // :: error: (assignment)
-    @Replaceable Set<String> r1 = growReplace; // Error: R removed → UnknownReplace !<: Replaceable
+    @Replaceable
+    Set<String> r1 =
+        growReplace; // OK: @replaceable set becomes @UnknownMod, GrowReplace set becomes @Growable.
 
     // @Growable @Shrinkable @Replaceable Set → Grow=G, Shrink=S, Replace=Unknown (R removed)
     // effectively the same as @Growable @Shrinkable Set
     @Growable
     @Shrinkable
     Set<String> gs1 = modifiable; // OK
-    // :: error: (assignment)
-    @Replaceable Set<String> r2 = modifiable; // Error: R removed
+    @Replaceable
+    Set<String> r2 =
+        modifiable; // OK: replaceale becomes unknown, modifiable becomes @Growable @Shrinkable
   }
 
   void testSetGrowShrinkPreserved(

@@ -1,0 +1,125 @@
+package org.checkerframework.checker.modifiability.replace;
+
+import java.lang.annotation.Annotation;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
+import org.checkerframework.checker.modifiability.qual.Modifiable;
+import org.checkerframework.checker.modifiability.qual.PolyModifiable;
+import org.checkerframework.checker.modifiability.qual.PolyReplace;
+import org.checkerframework.checker.modifiability.qual.Replaceable;
+import org.checkerframework.checker.modifiability.qual.UnknownModifiability;
+import org.checkerframework.checker.modifiability.qual.UnknownReplace;
+import org.checkerframework.checker.modifiability.qual.Unmodifiable;
+import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
+import org.checkerframework.common.basetype.BaseTypeChecker;
+import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
+import org.checkerframework.framework.type.typeannotator.ListTypeAnnotator;
+import org.checkerframework.framework.type.typeannotator.TypeAnnotator;
+import org.checkerframework.javacutil.AnnotationBuilder;
+
+/** The type factory for the Modifiability Checker. */
+public class ReplaceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
+
+  /** The erased {@code java.util.Set} type. */
+  private final TypeMirror setErasure;
+
+  /** The erased {@code java.util.Queue} type. */
+  private final TypeMirror queueErasure;
+
+  /** The erased {@code java.util.LinkedList} type. */
+  private final TypeMirror linkedListErasure;
+
+  /** The erased {@code java.util.Iterator} type. */
+  private final TypeMirror iteratorErasure;
+
+  // ── Hierarchy qualifiers ──────────
+
+  /** The {@code @}{@link UnknownReplace} qualifier (top of Replace hierarchy). */
+  private AnnotationMirror UNKNOWN_REPLACE;
+
+  /** The {@code @}{@link Replaceable} qualifier (bottom of Replace hierarchy). */
+  private AnnotationMirror REPLACEABLE;
+
+  /** The {@code @}{@link PolyReplace} qualifier. */
+  private AnnotationMirror POLY_REPLACE;
+
+  @SuppressWarnings("this-escape")
+  public ReplaceAnnotatedTypeFactory(BaseTypeChecker checker) {
+    super(checker);
+    // Cache type erasures.
+    Types types = getProcessingEnv().getTypeUtils();
+    this.setErasure = types.erasure(getElementUtils().getTypeElement("java.util.Set").asType());
+    this.queueErasure = types.erasure(getElementUtils().getTypeElement("java.util.Queue").asType());
+    this.linkedListErasure =
+        types.erasure(getElementUtils().getTypeElement("java.util.LinkedList").asType());
+    this.iteratorErasure =
+        types.erasure(getElementUtils().getTypeElement("java.util.Iterator").asType());
+
+    // Initialize annotation mirrors after the hierarchy is established.
+    this.UNKNOWN_REPLACE = AnnotationBuilder.fromClass(getElementUtils(), UnknownReplace.class);
+    this.REPLACEABLE = AnnotationBuilder.fromClass(getElementUtils(), Replaceable.class);
+    this.POLY_REPLACE = AnnotationBuilder.fromClass(getElementUtils(), PolyReplace.class);
+
+    addAliasedTypeAnnotation(Modifiable.class, REPLACEABLE);
+    addAliasedTypeAnnotation(Unmodifiable.class, UNKNOWN_REPLACE);
+    addAliasedTypeAnnotation(UnknownModifiability.class, UNKNOWN_REPLACE);
+    addAliasedTypeAnnotation(PolyModifiable.class, POLY_REPLACE);
+    postInit();
+  }
+
+  @Override
+  protected Set<Class<? extends Annotation>> createSupportedTypeQualifiers() {
+    return new LinkedHashSet<>(
+        Arrays.asList(UnknownReplace.class, Replaceable.class, PolyReplace.class));
+  }
+
+  @Override
+  protected TypeAnnotator createTypeAnnotator() {
+    return new ListTypeAnnotator(new ReplaceTypeAnnotator(this), super.createTypeAnnotator());
+  }
+
+  /**
+   * Removes capabilities that cannot be supported by structural constraints of the collection type:
+   *
+   * <ul>
+   *   <li>Set or Queue (not LinkedList): remove Replace capability → set Replace to
+   *       {@code @UnknownReplace}
+   *   <li>Iterator: remove Replace capabilities
+   * </ul>
+   */
+  private class ReplaceTypeAnnotator extends TypeAnnotator {
+    public ReplaceTypeAnnotator(ReplaceAnnotatedTypeFactory factory) {
+      super(factory);
+    }
+
+    @Override
+    public Void visitDeclared(AnnotatedDeclaredType type, Void p) {
+      super.visitDeclared(type, p);
+
+      // Skip structural refinement for polymorphic types.
+      if (type.hasPrimaryAnnotation(POLY_REPLACE)) {
+        return null;
+      }
+
+      TypeMirror underlyingType = type.getUnderlyingType();
+      Types types = getProcessingEnv().getTypeUtils();
+      TypeMirror erasure = types.erasure(underlyingType);
+
+      if (types.isSubtype(erasure, setErasure)
+          || (types.isSubtype(erasure, queueErasure)
+              && !types.isSubtype(erasure, linkedListErasure))) {
+        // Set or Queue (but not LinkedList): Drop R bit
+        type.replaceAnnotation(UNKNOWN_REPLACE);
+      } else if (types.isSubtype(erasure, iteratorErasure)) {
+        // Iterator: Drop G and R bits
+        type.replaceAnnotation(UNKNOWN_REPLACE);
+      }
+
+      return null;
+    }
+  }
+}

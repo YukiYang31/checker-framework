@@ -1,4 +1,4 @@
-package org.checkerframework.checker.modifiability;
+package org.checkerframework.checker.modifiability.replace;
 
 import com.sun.source.tree.MethodInvocationTree;
 import javax.lang.model.element.ExecutableElement;
@@ -9,12 +9,12 @@ import org.checkerframework.common.basetype.BaseTypeVisitor;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedExecutableType;
 import org.checkerframework.javacutil.TreeUtils;
 
-/** Visitor for the {@link ModifiabilityChecker}. */
-public class ModifiabilityVisitor extends BaseTypeVisitor<BaseAnnotatedTypeFactory> {
+/** Visitor for the {@link ReplaceChecker}. */
+public class ReplaceVisitor extends BaseTypeVisitor<BaseAnnotatedTypeFactory> {
 
-  /** Create a visitor for the Modifiability Checker. */
-  // MDE: Why is the type of `checker` BaseTypeChecker rather than ModifiabilityChecker?
-  public ModifiabilityVisitor(BaseTypeChecker checker) {
+  /** Create a visitor for the Grow Checker. */
+  // MDE: Why is the type of `checker` BaseTypeChecker rather than GrowChecker?
+  public ReplaceVisitor(BaseTypeChecker checker) {
     super(checker);
   }
 
