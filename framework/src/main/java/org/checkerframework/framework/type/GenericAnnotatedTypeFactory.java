@@ -1389,7 +1389,7 @@ public abstract class GenericAnnotatedTypeFactory<
                         fieldValues,
                         null,
                         /* isInitializationCode= */ true,
-                        /* updateInitializationStore= */ false,
+                        /* updateInitializationStore= */ true,
                         isStatic,
                         capturedStore);
                 postAnalyze(cfg);

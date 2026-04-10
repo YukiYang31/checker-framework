@@ -27,7 +27,7 @@ import org.checkerframework.framework.source.SuppressWarningsPrefix;
   Collections.class
 })
 @StubFiles({"ical4j.astub", "javaparser.astub"})
-@SuppressWarningsPrefix({"Replaceable", "UnknownReplace"})
+@SuppressWarningsPrefix({"replaceable", "modifiability"})
 public class ReplaceChecker extends BaseTypeChecker {
   /** Creates a Replace checker. */
   public ReplaceChecker() {}
