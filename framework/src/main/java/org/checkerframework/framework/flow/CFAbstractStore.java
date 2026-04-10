@@ -279,8 +279,7 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
                   "    doNotUnrefine: receiverJe=%s [%s]%n",
                   receiverJe, receiverJe.getClass().getSimpleName());
               System.out.printf("    doNotUnrefine: fa=%s [FieldAccess]%n", fa);
-              // TODO: Adjust this test.
-              return false;
+              return fa.equals(receiverJe);
             };
       } else {
         doNotUnrefine = (FieldAccess fa) -> false;
