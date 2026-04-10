@@ -7,6 +7,8 @@
 
 ### User-visible changes
 
+New `wpi2.sh` script does whole-program inference, but requires buildfile edits.
+
 ### Implementation details
 
 New method annotation `DoesNotUnrefineReceiver`.
