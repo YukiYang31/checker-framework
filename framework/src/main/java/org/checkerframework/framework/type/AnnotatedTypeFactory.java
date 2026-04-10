@@ -4062,6 +4062,13 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
    * @return all of the declaration annotations on this element, written in stub files, or inherited
    */
   public AnnotationMirrorSet getDeclAnnotations(Element elt) {
+    boolean debug = false;
+    // debug = elt instanceof ExecutableElement;
+    if (debug) {
+      System.out.printf(
+          "Entering getDeclAnnotations(%s.%s)%n",
+          ((ExecutableElement) elt).getEnclosingElement().getSimpleName(), elt);
+    }
     AnnotationMirrorSet cachedValue = cacheDeclAnnos.get(elt);
     if (cachedValue != null) {
       // Found in cache, return result.
@@ -4073,6 +4080,9 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
     // This includes annotations inherited from superclasses, but not superinterfaces or
     // overridden methods.
     List<? extends AnnotationMirror> fromEle = elements.getAllAnnotationMirrors(elt);
+    if (debug) {
+      System.out.printf("  fromEle = %s%n", fromEle);
+    }
     for (AnnotationMirror annotation : fromEle) {
       try {
         results.add(annotation);
@@ -5882,7 +5892,7 @@ public class AnnotatedTypeFactory implements AnnotationProvider {
   }
 
   @Override
-  public boolean isDoesNotUnrefineReceiver(ExecutableElement methodElement) {
+  public boolean hasDoesNotUnrefineReceiver(ExecutableElement methodElement) {
     for (AnnotationMirror am : getDeclAnnotations(methodElement)) {
       if (areSameByClass(am, org.checkerframework.dataflow.qual.DoesNotUnrefineReceiver.class)) {
         List<String> typeSystems =
