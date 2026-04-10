@@ -265,24 +265,24 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
 
       // Update field values.
       System.out.printf("sideEffectsUnrefineAliases = %s%n", sideEffectsUnrefineAliases);
-      Predicate<FieldAccess> doNotUnrefine;
+      Predicate<FieldAccess> doNotUnrefineField;
       System.out.printf(
           "hasDoesNotUnrefineReceiver=%s, receiver instanceof FieldAccessNode=%s%n",
           hasDoesNotUnrefineReceiver, receiver instanceof FieldAccessNode);
       if (hasDoesNotUnrefineReceiver && receiver instanceof FieldAccessNode receiverFan) {
-        doNotUnrefine =
+        doNotUnrefineField =
             (FieldAccess fa) -> {
               System.out.printf(
-                  "    doNotUnrefine: receiverFan=%s [FieldAccessNode] %n", receiverFan);
+                  "    doNotUnrefineField: receiverFan=%s [FieldAccessNode] %n", receiverFan);
               JavaExpression receiverJe = JavaExpression.fromNodeFieldAccess(receiverFan);
               System.out.printf(
-                  "    doNotUnrefine: receiverJe=%s [%s]%n",
+                  "    doNotUnrefineField: receiverJe=%s [%s]%n",
                   receiverJe, receiverJe.getClass().getSimpleName());
-              System.out.printf("    doNotUnrefine: fa=%s [FieldAccess]%n", fa);
+              System.out.printf("    doNotUnrefineField: fa=%s [FieldAccess]%n", fa);
               return fa.equals(receiverJe);
             };
       } else {
-        doNotUnrefine = (FieldAccess fa) -> false;
+        doNotUnrefineField = (FieldAccess fa) -> false;
       }
       if (sideEffectsUnrefineAliases) {
         fieldValues
@@ -291,11 +291,11 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
                 (Map.Entry<FieldAccess, V> e) -> {
                   FieldAccess fa = e.getKey();
                   System.out.printf("    removeif: fa = %s%n", fa);
-                  return fa.isModifiableByOtherCode() && !doNotUnrefine.test(fa);
+                  return fa.isModifiableByOtherCode() && !doNotUnrefineField.test(fa);
                 });
       } else {
         // Case 2 (unassignable fields) and case 3 (monotonic fields)
-        updateFieldValuesForMethodCall(gatypeFactory, doNotUnrefine);
+        updateFieldValuesForMethodCall(gatypeFactory, doNotUnrefineField);
       }
 
       // Update array values.
@@ -398,10 +398,12 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
    * fields that have a monotonic annotation.
    *
    * @param atypeFactory AnnotatedTypeFactory of the associated checker
-   * @param doNotUnrefine if true,
+   * @param doNotUnrefineField if true of a field access, don't unrefine it. This predicate
+   *     indicates exceptions: fields that is not updated by this method.
    */
   private void updateFieldValuesForMethodCall(
-      GenericAnnotatedTypeFactory<V, S, ?, ?> atypeFactory, Predicate<FieldAccess> doNotUnrefine) {
+      GenericAnnotatedTypeFactory<V, S, ?, ?> atypeFactory,
+      Predicate<FieldAccess> doNotUnrefineField) {
     System.out.printf("entering updateFieldValuesForMethodCall%n");
     Map<FieldAccess, V> newFieldValues = new HashMap<>(MapsP.mapCapacity(fieldValues));
     for (Map.Entry<FieldAccess, V> e : fieldValues.entrySet()) {
@@ -409,9 +411,10 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
       V previousValue = e.getValue();
 
       V newValue;
-      boolean doNotUnrefineResult = doNotUnrefine.test(fieldAccess);
-      System.out.printf("  doNotUnrefineResult(%s) => %s%n", fieldAccess, doNotUnrefineResult);
-      if (doNotUnrefineResult) {
+      boolean doNotUnrefineFieldResult = doNotUnrefineField.test(fieldAccess);
+      System.out.printf(
+          "  doNotUnrefineFieldResult(%s) => %s%n", fieldAccess, doNotUnrefineFieldResult);
+      if (doNotUnrefineFieldResult) {
         newValue = previousValue;
       } else {
         newValue = newFieldValueAfterMethodCall(fieldAccess, atypeFactory, previousValue);
