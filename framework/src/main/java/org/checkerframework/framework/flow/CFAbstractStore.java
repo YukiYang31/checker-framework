@@ -265,12 +265,13 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
       }
 
       // Update this value.
-      if (sideEffectsUnrefineAliases && !(receiverJe instanceof ThisReference)) {
+      if (sideEffectsUnrefineAliases
+          && !(receiverJe instanceof ThisReference)
+          && !(receiverJe instanceof SuperReference)) {
         thisValue = null;
       }
 
       // Update field values.
-      Predicate<FieldAccess> doNotUnrefineField = fa -> doNotUnrefine.test(fa);
       if (sideEffectsUnrefineAliases) {
         fieldValues
             .entrySet()
@@ -281,7 +282,7 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
                 });
       } else {
         // Case 2 (unassignable fields) and case 3 (monotonic fields).
-        updateFieldValuesForMethodCall(gatypeFactory, doNotUnrefineField);
+        updateFieldValuesForMethodCall(gatypeFactory, doNotUnrefine::test);
       }
 
       // Update array values.
