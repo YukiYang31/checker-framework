@@ -385,20 +385,19 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
    * fields that have a monotonic annotation.
    *
    * @param atypeFactory AnnotatedTypeFactory of the associated checker
-   * @param doNotUnrefineField if true of a field access, don't unrefine it. This predicate
-   *     indicates exceptions: fields that is not updated by this method.
+   * @param doNotUnrefine if true of a field access, don't unrefine it. This predicate indicates
+   *     exceptions: fields that is not updated by this method.
    */
   private void updateFieldValuesForMethodCall(
-      GenericAnnotatedTypeFactory<V, S, ?, ?> atypeFactory,
-      Predicate<FieldAccess> doNotUnrefineField) {
+      GenericAnnotatedTypeFactory<V, S, ?, ?> atypeFactory, Predicate<FieldAccess> doNotUnrefine) {
     Map<FieldAccess, V> newFieldValues = new HashMap<>(MapsP.mapCapacity(fieldValues));
     for (Map.Entry<FieldAccess, V> e : fieldValues.entrySet()) {
       FieldAccess fieldAccess = e.getKey();
       V previousValue = e.getValue();
 
       V newValue;
-      boolean doNotUnrefineFieldResult = doNotUnrefineField.test(fieldAccess);
-      if (doNotUnrefineFieldResult) {
+      boolean doNotUnrefineResult = doNotUnrefine.test(fieldAccess);
+      if (doNotUnrefineResult) {
         newValue = previousValue;
       } else {
         newValue = newFieldValueAfterMethodCall(fieldAccess, atypeFactory, previousValue);
