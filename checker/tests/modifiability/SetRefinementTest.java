@@ -7,6 +7,7 @@ import java.util.List;
 // type (@UnknownModifiability), causing subsequent mutation calls to fail.
 public class SetRefinementTest {
 
+  // Flow-refinement behaves as if this assignment is at the beginning of every constructor body.
   private List<String> items = new ArrayList<>();
 
   /** Creates a new SetRefinementTest. */
@@ -18,25 +19,23 @@ public class SetRefinementTest {
    * @param other list to copy from
    */
   public SetRefinementTest(List<String> other) {
-    this.items.addAll(other); // this should not be allowed but checker is not checking this
+    this.items.addAll(other);
   }
 
   public SetRefinementTest(List<String> other, int dummy) {
-    // checker immediately sees that items' flow-type is @Modifiable, so this is ok
     this.items.set(0, other.get(0));
-    // since set is not side-effect-free, we lose the @Modifiable refinement
     this.items.addAll(other);
   }
 
   public SetRefinementTest(List<String> other, boolean dummy) {
-    this.items.set(0, other.get(0)); // this should not be allowed but checker is not checking this
+    this.items.set(0, other.get(0));
     this.items.set(0, other.get(0));
     this.items.addAll(other);
   }
 
   public SetRefinementTest(List<String> other, float dummy) {
-    this.items.get(0); // get is side-effect-free, after this line, items is still @Modifiable
-    this.items.set(0, other.get(0)); // ok
+    this.items.get(0);
+    this.items.set(0, other.get(0));
     this.items.addAll(other);
   }
 
