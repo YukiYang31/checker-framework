@@ -237,8 +237,6 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
             || atypeFactory.isSideEffectFree(method));
     if (hasSideEffect) {
 
-      // TODO: For each of these, if it happens to be the receiver, don't unrefine it.x
-
       boolean sideEffectsUnrefineAliases = gatypeFactory.sideEffectsUnrefineAliases;
       Node receiver = methodInvocationNode.getTarget().getReceiver();
       System.out.printf("receiver = %s [%s]%n", receiver, receiver.getClass());
@@ -246,73 +244,66 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
       System.out.printf(
           "hasDoesNotUnrefineReceiver(%s) = %s%n", method, hasDoesNotUnrefineReceiver);
 
-      // Runnable shouldRemove
-      // = (JavaExpression je) -> !(hasDoesNotUnrefineReceiver && fa == receiver)
-      //                 && fa.isModifiableByOtherCode()
-
       // TODO: Also remove if any element/argument to the annotation is not
       // isUnmodifiableByOtherCode.  Example: @KeyFor("valueThatCanBeMutated").
 
+      // If @DoesNotUnrefineReceiver is present, compute the receiver as a JavaExpression so
+      // that it can be exempted from unrefinement in all expression categories below.
+      @Nullable JavaExpression receiverJe =
+          hasDoesNotUnrefineReceiver ? JavaExpression.fromNode(receiver) : null;
+      // Returns true if the expression should NOT be unrefined (because the method is
+      // annotated @DoesNotUnrefineReceiver and the expression is the receiver).
+      Predicate<JavaExpression> doNotUnrefine =
+          receiverJe != null ? je -> je.equals(receiverJe) : je -> false;
+
       // Update local variables.
       if (sideEffectsUnrefineAliases) {
-        localVariableValues.entrySet().removeIf(e -> e.getKey().isModifiableByOtherCode());
+        localVariableValues
+            .entrySet()
+            .removeIf(
+                e -> {
+                  LocalVariable lv = e.getKey();
+                  return lv.isModifiableByOtherCode() && !doNotUnrefine.test(lv);
+                });
       }
 
       // Update this value.
-      if (sideEffectsUnrefineAliases) {
+      if (sideEffectsUnrefineAliases && !(receiverJe instanceof ThisReference)) {
         thisValue = null;
       }
 
       // Update field values.
       System.out.printf("sideEffectsUnrefineAliases = %s%n", sideEffectsUnrefineAliases);
-      Predicate<FieldAccess> doNotUnrefineField;
-      System.out.printf(
-          "hasDoesNotUnrefineReceiver=%s, receiver instanceof FieldAccessNode=%s%n",
-          hasDoesNotUnrefineReceiver, receiver instanceof FieldAccessNode);
-      if (hasDoesNotUnrefineReceiver && receiver instanceof FieldAccessNode receiverFan) {
-        doNotUnrefineField =
-            (FieldAccess fa) -> {
-              System.out.printf(
-                  "    doNotUnrefineField: receiverFan=%s [FieldAccessNode] %n", receiverFan);
-              JavaExpression receiverJe = JavaExpression.fromNodeFieldAccess(receiverFan);
-              System.out.printf(
-                  "    doNotUnrefineField: receiverJe=%s [%s]%n",
-                  receiverJe, receiverJe.getClass().getSimpleName());
-              System.out.printf("    doNotUnrefineField: fa=%s [FieldAccess]%n", fa);
-              return fa.equals(receiverJe);
-            };
-      } else {
-        doNotUnrefineField = (FieldAccess fa) -> false;
-      }
+      Predicate<FieldAccess> doNotUnrefineField = fa -> doNotUnrefine.test(fa);
       if (sideEffectsUnrefineAliases) {
         fieldValues
             .entrySet()
             .removeIf(
                 (Map.Entry<FieldAccess, V> e) -> {
                   FieldAccess fa = e.getKey();
-                  System.out.printf("    removeif: fa = %s%n", fa);
-                  return fa.isModifiableByOtherCode() && !doNotUnrefineField.test(fa);
+                  return fa.isModifiableByOtherCode() && !doNotUnrefine.test(fa);
                 });
       } else {
-        // Case 2 (unassignable fields) and case 3 (monotonic fields)
+        // Case 2 (unassignable fields) and case 3 (monotonic fields).
         updateFieldValuesForMethodCall(gatypeFactory, doNotUnrefineField);
       }
 
       // Update array values.
-      arrayValues.clear();
+      arrayValues.entrySet().removeIf(e -> !doNotUnrefine.test(e.getKey()));
 
       // Update information about method calls.
-      updateMethodCallValues();
+      methodCallExpressions
+          .entrySet()
+          .removeIf(
+              e -> {
+                MethodCall mc = e.getKey();
+                return mc.isModifiableByOtherCode() && !doNotUnrefine.test(mc);
+              });
     }
 
     // Store information about method calls if possible.
     JavaExpression methodCall = JavaExpression.fromNode(methodInvocationNode);
     replaceValue(methodCall, val);
-  }
-
-  /** Update information about method calls. */
-  private void updateMethodCallValues() {
-    methodCallExpressions.keySet().removeIf(MethodCall::isModifiableByOtherCode);
   }
 
   /**
