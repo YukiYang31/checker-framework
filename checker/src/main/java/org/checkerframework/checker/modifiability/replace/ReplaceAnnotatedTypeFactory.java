@@ -56,6 +56,11 @@ public class ReplaceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   /** The {@code @}{@link PolyReplace} qualifier. */
   private AnnotationMirror POLY_REPLACE;
 
+  /**
+   * Creates a ReplaceAnnotatedTypeFactory.
+   *
+   * @param checker the associated type-checker
+   */
   @SuppressWarnings("this-escape")
   public ReplaceAnnotatedTypeFactory(BaseTypeChecker checker) {
     super(checker);
@@ -107,6 +112,11 @@ public class ReplaceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
    * </ul>
    */
   private class ReplaceTypeAnnotator extends TypeAnnotator {
+    /**
+     * Creates a new ReplaceTypeAnnotator.
+     *
+     * @param factory the associated type factory
+     */
     public ReplaceTypeAnnotator(ReplaceAnnotatedTypeFactory factory) {
       super(factory);
     }

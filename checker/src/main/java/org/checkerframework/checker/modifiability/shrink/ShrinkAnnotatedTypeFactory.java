@@ -41,6 +41,11 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   /** The {@code @}{@link PolyShrink} qualifier. */
   private AnnotationMirror POLY_SHRINK;
 
+  /**
+   * Creates a ShrinkAnnotatedTypeFactory.
+   *
+   * @param checker the associated type-checker
+   */
   @SuppressWarnings("this-escape")
   public ShrinkAnnotatedTypeFactory(BaseTypeChecker checker) {
     super(checker);
@@ -81,6 +86,12 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
    * </ul>
    */
   private class ShrinkTypeAnnotator extends TypeAnnotator {
+
+    /**
+     * Creates a new ShrinkTypeAnnotator.
+     *
+     * @param factory the associated type factory
+     */
     public ShrinkTypeAnnotator(ShrinkAnnotatedTypeFactory factory) {
       super(factory);
     }

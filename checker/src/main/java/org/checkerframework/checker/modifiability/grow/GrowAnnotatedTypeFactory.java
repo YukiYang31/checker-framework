@@ -47,6 +47,11 @@ public class GrowAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   /** The {@code @}{@link PolyGrow} qualifier. */
   private AnnotationMirror POLY_GROW;
 
+  /**
+   * Creates a GrowAnnotatedTypeFactory.
+   *
+   * @param checker the associated type-checker
+   */
   @SuppressWarnings("this-escape")
   public GrowAnnotatedTypeFactory(BaseTypeChecker checker) {
     super(checker);
@@ -91,6 +96,11 @@ public class GrowAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
    * </ul>
    */
   private class GrowTypeAnnotator extends TypeAnnotator {
+    /**
+     * Creates a new GrowTypeAnnotator.
+     *
+     * @param factory the associated type factory
+     */
     public GrowTypeAnnotator(GrowAnnotatedTypeFactory factory) {
       super(factory);
     }
