@@ -239,10 +239,7 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
 
       boolean sideEffectsUnrefineAliases = gatypeFactory.sideEffectsUnrefineAliases;
       Node receiver = methodInvocationNode.getTarget().getReceiver();
-      System.out.printf("receiver = %s [%s]%n", receiver, receiver.getClass());
       boolean hasDoesNotUnrefineReceiver = atypeFactory.hasDoesNotUnrefineReceiver(method);
-      System.out.printf(
-          "hasDoesNotUnrefineReceiver(%s) = %s%n", method, hasDoesNotUnrefineReceiver);
 
       // TODO: Also remove if any element/argument to the annotation is not
       // isUnmodifiableByOtherCode.  Example: @KeyFor("valueThatCanBeMutated").
@@ -273,7 +270,6 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
       }
 
       // Update field values.
-      System.out.printf("sideEffectsUnrefineAliases = %s%n", sideEffectsUnrefineAliases);
       Predicate<FieldAccess> doNotUnrefineField = fa -> doNotUnrefine.test(fa);
       if (sideEffectsUnrefineAliases) {
         fieldValues
@@ -395,7 +391,6 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
   private void updateFieldValuesForMethodCall(
       GenericAnnotatedTypeFactory<V, S, ?, ?> atypeFactory,
       Predicate<FieldAccess> doNotUnrefineField) {
-    System.out.printf("entering updateFieldValuesForMethodCall%n");
     Map<FieldAccess, V> newFieldValues = new HashMap<>(MapsP.mapCapacity(fieldValues));
     for (Map.Entry<FieldAccess, V> e : fieldValues.entrySet()) {
       FieldAccess fieldAccess = e.getKey();
@@ -403,8 +398,6 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
 
       V newValue;
       boolean doNotUnrefineFieldResult = doNotUnrefineField.test(fieldAccess);
-      System.out.printf(
-          "  doNotUnrefineFieldResult(%s) => %s%n", fieldAccess, doNotUnrefineFieldResult);
       if (doNotUnrefineFieldResult) {
         newValue = previousValue;
       } else {
