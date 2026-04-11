@@ -386,7 +386,7 @@ public abstract class CFAbstractStore<V extends CFAbstractValue<V>, S extends CF
    *
    * @param atypeFactory AnnotatedTypeFactory of the associated checker
    * @param doNotUnrefine if true of a field access, don't unrefine it. This predicate indicates
-   *     exceptions: fields that is not updated by this method.
+   *     exceptions: fields that are not updated by this method.
    */
   private void updateFieldValuesForMethodCall(
       GenericAnnotatedTypeFactory<V, S, ?, ?> atypeFactory, Predicate<FieldAccess> doNotUnrefine) {
