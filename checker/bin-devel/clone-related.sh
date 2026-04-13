@@ -49,7 +49,8 @@ else
 fi
 
 # Clone the annotated JDK into ../jdk .
-"$GIT_SCRIPTS/git-clone-related" ${DEBUG_FLAG} typetools ../jdk
+# TODO: Document why the command line uses "jdk" rather than "../jdk".
+"$GIT_SCRIPTS/git-clone-related" ${DEBUG_FLAG} typetools jdk
 
 ### Commented temporarily because JSpecify build is failing under JDK 17.
 ### (I guess they don't use continuous integration.)
