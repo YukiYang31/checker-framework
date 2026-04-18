@@ -12,8 +12,7 @@ import java.lang.annotation.Target;
  * collection is growable, shrinkable, or replaceable.
  *
  * <p>This annotation is not part of the type hierarchy; the Modifiability Checker expands it to
- * {@code @UnknownGrow @UnknownShrink @UnknownReplace} on each annotated type. It is equivalent to
- * {@link Unmodifiable}.
+ * {@code @UnknownGrow @UnknownShrink @UnknownReplace} on each annotated type.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */

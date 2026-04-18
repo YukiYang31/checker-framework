@@ -9,9 +9,9 @@ import org.checkerframework.framework.qual.DefaultQualifierInHierarchy;
 import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * The top qualifier in the Shrink hierarchy. Represents an unknown or absent shrink capability. The
- * checker cannot determine whether the collection supports shrink operations such as {@code remove}
- * or {@code clear}.
+ * The top qualifier in the Shrink hierarchy. Represents unknown shrink capability. The checker
+ * cannot determine whether the collection supports shrink operations such as {@code remove} or
+ * {@code clear}.
  *
  * <p>This is the default qualifier for unannotated types in the Shrink hierarchy.
  *

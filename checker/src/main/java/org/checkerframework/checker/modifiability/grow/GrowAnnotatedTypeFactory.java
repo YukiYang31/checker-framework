@@ -7,10 +7,12 @@ import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
+import org.checkerframework.checker.modifiability.qual.BottomGrow;
 import org.checkerframework.checker.modifiability.qual.Growable;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.PolyGrow;
 import org.checkerframework.checker.modifiability.qual.PolyModifiable;
+import org.checkerframework.checker.modifiability.qual.Ungrowable;
 import org.checkerframework.checker.modifiability.qual.UnknownGrow;
 import org.checkerframework.checker.modifiability.qual.UnknownModifiability;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
@@ -41,8 +43,11 @@ public class GrowAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   /** The {@code @}{@link UnknownGrow} qualifier (top of Grow hierarchy). */
   private AnnotationMirror UNKNOWN_GROW;
 
-  /** The {@code @}{@link Growable} qualifier (bottom of Grow hierarchy). */
+  /** The {@code @}{@link Growable} qualifier. */
   private AnnotationMirror GROWABLE;
+
+  /** The {@code @}{@link Ungrowable} qualifier. */
+  private AnnotationMirror UNGROWABLE;
 
   /** The {@code @}{@link PolyGrow} qualifier. */
   private AnnotationMirror POLY_GROW;
@@ -61,10 +66,11 @@ public class GrowAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     // Initialize annotation mirrors after the hierarchy is established.
     this.UNKNOWN_GROW = AnnotationBuilder.fromClass(getElementUtils(), UnknownGrow.class);
     this.GROWABLE = AnnotationBuilder.fromClass(getElementUtils(), Growable.class);
+    this.UNGROWABLE = AnnotationBuilder.fromClass(getElementUtils(), Ungrowable.class);
     this.POLY_GROW = AnnotationBuilder.fromClass(getElementUtils(), PolyGrow.class);
 
     addAliasedTypeAnnotation(Modifiable.class, GROWABLE);
-    addAliasedTypeAnnotation(Unmodifiable.class, UNKNOWN_GROW);
+    addAliasedTypeAnnotation(Unmodifiable.class, UNGROWABLE);
     addAliasedTypeAnnotation(UnknownModifiability.class, UNKNOWN_GROW);
     addAliasedTypeAnnotation(PolyModifiable.class, POLY_GROW);
     postInit();
@@ -72,7 +78,9 @@ public class GrowAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
 
   @Override
   protected Set<Class<? extends Annotation>> createSupportedTypeQualifiers() {
-    return new LinkedHashSet<>(Arrays.asList(UnknownGrow.class, Growable.class, PolyGrow.class));
+    return new LinkedHashSet<>(
+        Arrays.asList(
+            UnknownGrow.class, Growable.class, Ungrowable.class, BottomGrow.class, PolyGrow.class));
   }
 
   @Override

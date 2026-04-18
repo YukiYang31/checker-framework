@@ -7,6 +7,7 @@ import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
+import org.checkerframework.checker.modifiability.qual.BottomShrink;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.PolyModifiable;
 import org.checkerframework.checker.modifiability.qual.PolyShrink;
@@ -14,6 +15,7 @@ import org.checkerframework.checker.modifiability.qual.Shrinkable;
 import org.checkerframework.checker.modifiability.qual.UnknownModifiability;
 import org.checkerframework.checker.modifiability.qual.UnknownShrink;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
+import org.checkerframework.checker.modifiability.qual.Unshrinkable;
 import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
@@ -35,8 +37,11 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   /** The {@code @}{@link UnknownShrink} qualifier (top of Shrink hierarchy). */
   private AnnotationMirror UNKNOWN_SHRINK;
 
-  /** The {@code @}{@link Shrinkable} qualifier (bottom of Shrink hierarchy). */
+  /** The {@code @}{@link Shrinkable} qualifier. */
   private AnnotationMirror SHRINKABLE;
+
+  /** The {@code @}{@link Unshrinkable} qualifier. */
+  private AnnotationMirror UNSHRINKABLE;
 
   /** The {@code @}{@link PolyShrink} qualifier. */
   private AnnotationMirror POLY_SHRINK;
@@ -52,10 +57,11 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     // Initialize annotation mirrors after the hierarchy is established.
     this.UNKNOWN_SHRINK = AnnotationBuilder.fromClass(getElementUtils(), UnknownShrink.class);
     this.SHRINKABLE = AnnotationBuilder.fromClass(getElementUtils(), Shrinkable.class);
+    this.UNSHRINKABLE = AnnotationBuilder.fromClass(getElementUtils(), Unshrinkable.class);
     this.POLY_SHRINK = AnnotationBuilder.fromClass(getElementUtils(), PolyShrink.class);
 
     addAliasedTypeAnnotation(Modifiable.class, SHRINKABLE);
-    addAliasedTypeAnnotation(Unmodifiable.class, UNKNOWN_SHRINK);
+    addAliasedTypeAnnotation(Unmodifiable.class, UNSHRINKABLE);
     addAliasedTypeAnnotation(UnknownModifiability.class, UNKNOWN_SHRINK);
     addAliasedTypeAnnotation(PolyModifiable.class, POLY_SHRINK);
     postInit();
@@ -64,7 +70,12 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   @Override
   protected Set<Class<? extends Annotation>> createSupportedTypeQualifiers() {
     return new LinkedHashSet<>(
-        Arrays.asList(UnknownShrink.class, Shrinkable.class, PolyShrink.class));
+        Arrays.asList(
+            UnknownShrink.class,
+            Shrinkable.class,
+            Unshrinkable.class,
+            BottomShrink.class,
+            PolyShrink.class));
   }
 
   @Override
@@ -97,7 +108,7 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
       TypeMirror underlyingType = type.getUnderlyingType();
 
       if (TypesUtils.isErasedSubtype(underlyingType, mapEntryErasure, types)) {
-        // Map.Entry: Drop G and S bits
+        // Map.Entry: no shrink.
         type.replaceAnnotation(UNKNOWN_SHRINK);
       }
 

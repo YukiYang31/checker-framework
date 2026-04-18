@@ -92,6 +92,9 @@ spotless {
       googleJavaFormat(libs.google.java.format.get().version)
     }
     formatAnnotations()
+        .addTypeAnnotation("BottomGrow")
+        .addTypeAnnotation("BottomReplace")
+        .addTypeAnnotation("BottomShrink")
         .addTypeAnnotation("Growable")
         .addTypeAnnotation("Modifiable")
         .addTypeAnnotation("PolyGrow")
@@ -104,6 +107,9 @@ spotless {
         .addTypeAnnotation("UnknownModifiability")
         .addTypeAnnotation("UnknownReplace")
         .addTypeAnnotation("UnknownShrink")
+        .addTypeAnnotation("Ungrowable")
+        .addTypeAnnotation("Unreplaceable")
+        .addTypeAnnotation("Unshrinkable")
         .addTypeAnnotation("Unmodifiable")
   }
 

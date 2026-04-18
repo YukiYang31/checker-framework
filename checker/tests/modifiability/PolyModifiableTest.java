@@ -105,10 +105,11 @@ public class PolyModifiableTest {
     @Growable List<String> u3 = identity(unknown); // Error
 
     // ============================================================
-    // Identity on @Unmodifiable (alias for all tops)
+    // Identity on @Unmodifiable (Ungrowable+Unshrinkable+Unreplaceable)
     // ============================================================
     @Unmodifiable List<String> unmod1 = identity(unmod); // OK
+    @UnknownModifiability List<String> unmod2 = identity(unmod); // OK
     // :: error: [assignment]
-    @Modifiable List<String> unmod2 = identity(unmod); // Error
+    @Modifiable List<String> unmod3 = identity(unmod); // Error
   }
 }
