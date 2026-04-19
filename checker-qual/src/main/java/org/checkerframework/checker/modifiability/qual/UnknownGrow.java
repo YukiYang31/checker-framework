@@ -9,8 +9,8 @@ import org.checkerframework.framework.qual.DefaultQualifierInHierarchy;
 import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * The top qualifier in the Grow hierarchy. Represents an unknown or absent grow capability. The
- * checker cannot determine whether the collection supports grow operations such as {@code add}.
+ * The top qualifier in the Grow hierarchy. Represents unknown grow capability. The checker cannot
+ * determine whether the collection supports grow operations such as {@code add}.
  *
  * <p>This is the default qualifier for unannotated types in the Grow hierarchy.
  *

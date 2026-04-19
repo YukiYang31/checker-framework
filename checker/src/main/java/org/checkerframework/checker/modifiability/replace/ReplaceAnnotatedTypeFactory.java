@@ -7,6 +7,7 @@ import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
+import org.checkerframework.checker.modifiability.qual.BottomReplace;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.PolyModifiable;
 import org.checkerframework.checker.modifiability.qual.PolyReplace;
@@ -14,6 +15,7 @@ import org.checkerframework.checker.modifiability.qual.Replaceable;
 import org.checkerframework.checker.modifiability.qual.UnknownModifiability;
 import org.checkerframework.checker.modifiability.qual.UnknownReplace;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
+import org.checkerframework.checker.modifiability.qual.Unreplaceable;
 import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
@@ -50,8 +52,11 @@ public class ReplaceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   /** The {@code @}{@link UnknownReplace} qualifier (top of Replace hierarchy). */
   private AnnotationMirror UNKNOWN_REPLACE;
 
-  /** The {@code @}{@link Replaceable} qualifier (bottom of Replace hierarchy). */
+  /** The {@code @}{@link Replaceable} qualifier. */
   private AnnotationMirror REPLACEABLE;
+
+  /** The {@code @}{@link Unreplaceable} qualifier. */
+  private AnnotationMirror UNREPLACEABLE;
 
   /** The {@code @}{@link PolyReplace} qualifier. */
   private AnnotationMirror POLY_REPLACE;
@@ -80,10 +85,11 @@ public class ReplaceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     // Initialize annotation mirrors after the hierarchy is established.
     this.UNKNOWN_REPLACE = AnnotationBuilder.fromClass(getElementUtils(), UnknownReplace.class);
     this.REPLACEABLE = AnnotationBuilder.fromClass(getElementUtils(), Replaceable.class);
+    this.UNREPLACEABLE = AnnotationBuilder.fromClass(getElementUtils(), Unreplaceable.class);
     this.POLY_REPLACE = AnnotationBuilder.fromClass(getElementUtils(), PolyReplace.class);
 
     addAliasedTypeAnnotation(Modifiable.class, REPLACEABLE);
-    addAliasedTypeAnnotation(Unmodifiable.class, UNKNOWN_REPLACE);
+    addAliasedTypeAnnotation(Unmodifiable.class, UNREPLACEABLE);
     addAliasedTypeAnnotation(UnknownModifiability.class, UNKNOWN_REPLACE);
     addAliasedTypeAnnotation(PolyModifiable.class, POLY_REPLACE);
     postInit();
@@ -92,7 +98,12 @@ public class ReplaceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   @Override
   protected Set<Class<? extends Annotation>> createSupportedTypeQualifiers() {
     return new LinkedHashSet<>(
-        Arrays.asList(UnknownReplace.class, Replaceable.class, PolyReplace.class));
+        Arrays.asList(
+            UnknownReplace.class,
+            Replaceable.class,
+            Unreplaceable.class,
+            BottomReplace.class,
+            PolyReplace.class));
   }
 
   @Override

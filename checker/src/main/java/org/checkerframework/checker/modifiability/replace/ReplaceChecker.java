@@ -14,8 +14,8 @@ import org.checkerframework.framework.source.SuppressWarningsPrefix;
  * UnsupportedOperationException} at run time due to calling a replace method on a collection.
  *
  * <p>The checker enforces the Modifiability type system, where {@code @Replaceable} collections can
- * be safely mutated and {@code @UnknownReplace} collections cannot call remove without risking an
- * {@link UnsupportedOperationException}.
+ * be safely mutated, {@code @Unreplaceable} collections cannot be replaced, and
+ * {@code @UnknownReplace} collections have unknown replace behavior.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */
