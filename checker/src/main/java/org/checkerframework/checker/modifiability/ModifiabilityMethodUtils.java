@@ -21,7 +21,8 @@ public final class ModifiabilityMethodUtils {
   }
 
   /**
-   * Returns true if {@code tree} invokes {@code org.plumelib.util.CollectionsPlume.withoutDuplicates(Collection)}.
+   * Returns true if {@code tree} invokes {@code
+   * org.plumelib.util.CollectionsPlume.withoutDuplicates(Collection)}.
    *
    * @param tree a method invocation tree
    * @return true iff {@code tree} invokes {@code CollectionsPlume.withoutDuplicates(Collection)}

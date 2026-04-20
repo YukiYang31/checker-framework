@@ -27,7 +27,7 @@ import org.checkerframework.framework.source.SuppressWarningsPrefix;
   Collections.class
 })
 @StubFiles({"ical4j.astub", "javaparser.astub"})
-@SuppressWarningsPrefix({"Shrinkable", "Unshrinkable", "UnknownShrink", "BottomShrink"})
+@SuppressWarningsPrefix({"shrinkable", "modifiability"})
 public class ShrinkChecker extends BaseTypeChecker {
   /** Creates a Shrink checker. */
   public ShrinkChecker() {}

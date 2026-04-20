@@ -27,7 +27,7 @@ import org.checkerframework.framework.source.SuppressWarningsPrefix;
   Collections.class
 })
 @StubFiles({"ical4j.astub", "javaparser.astub"})
-@SuppressWarningsPrefix({"Growable", "Ungrowable", "UnknownGrow", "BottomGrow"})
+@SuppressWarningsPrefix({"growable", "modifiability"})
 public class GrowChecker extends BaseTypeChecker {
   /** Creates a Grow checker. */
   public GrowChecker() {}
