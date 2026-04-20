@@ -1,5 +1,6 @@
 package org.checkerframework.checker.modifiability.replace;
 
+import com.sun.source.tree.MethodInvocationTree;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -7,6 +8,7 @@ import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
+import org.checkerframework.checker.modifiability.ModifiabilityMethodUtils;
 import org.checkerframework.checker.modifiability.qual.BottomReplace;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.PolyModifiable;
@@ -18,7 +20,9 @@ import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 import org.checkerframework.checker.modifiability.qual.Unreplaceable;
 import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
 import org.checkerframework.common.basetype.BaseTypeChecker;
+import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
+import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedExecutableType;
 import org.checkerframework.framework.type.QualifierUpperBounds;
 import org.checkerframework.framework.type.typeannotator.ListTypeAnnotator;
 import org.checkerframework.framework.type.typeannotator.TypeAnnotator;
@@ -109,6 +113,24 @@ public class ReplaceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   @Override
   protected TypeAnnotator createTypeAnnotator() {
     return new ListTypeAnnotator(new ReplaceTypeAnnotator(this), super.createTypeAnnotator());
+  }
+
+  @Override
+  protected ParameterizedExecutableType methodFromUse(
+      MethodInvocationTree tree, boolean inferTypeArgs) {
+    ParameterizedExecutableType mType = super.methodFromUse(tree, inferTypeArgs);
+    if (!ModifiabilityMethodUtils.isCollectionsPlumeWithoutDuplicates(tree)) {
+      return mType;
+    }
+
+    AnnotatedExecutableType method = mType.executableType();
+    AnnotatedTypeMirror argumentType = getAnnotatedType(tree.getArguments().get(0));
+    if (argumentType.hasPrimaryAnnotation(REPLACEABLE)) {
+      method.getReturnType().replaceAnnotation(REPLACEABLE);
+    } else {
+      method.getReturnType().replaceAnnotation(UNKNOWN_REPLACE);
+    }
+    return mType;
   }
 
   /**
