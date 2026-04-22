@@ -502,11 +502,15 @@ workflows:
             - junit_part1_jdk25
             - junit_part2_jdk25
             - nonjunit_jdk25
+            - inference_part1_jdk25
+            - inference_part2_jdk25
             - typecheck_part1_jdk25
             - typecheck_part2_jdk25
             - misc_jdk25
             - misc_jdk26
 
+      - junit_part1_jdk25
+      - junit_part2_jdk25
       - nonjunit_jdk25
       - misc_jdk11:
           requires:
@@ -524,9 +528,7 @@ workflows:
             - misc_jdk25
 
       - misc_jdk25
-      - misc_jdk26:
-          requires:
-            - canary_jobs
+      - misc_jdk26
 
       - typecheck_part1_jdk25
       - typecheck_part2_jdk25
@@ -535,13 +537,9 @@ workflows:
           requires:
             - canary_jobs
 
-      - inference_part1_jdk25:
-          requires:
-            - canary_jobs
+      - inference_part1_jdk25
 
-      - inference_part2_jdk25:
-          requires:
-            - canary_jobs
+      - inference_part2_jdk25
 
       - daikon_part1_jdk25:
           requires:
