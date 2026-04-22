@@ -8,14 +8,6 @@ on:
     branches:
       - "**"
 
-permissions:
-  contents: read
-
-env:
-  GIT_CONFIG_COUNT: "1"
-  GIT_CONFIG_KEY_0: safe.directory
-  GIT_CONFIG_VALUE_0: ${{ github.workspace }}
-
 jobs:
   junit_part1_jdk25:
     runs-on: ubuntu-latest
@@ -25,7 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-cftests-junit.sh part1
         env:
@@ -40,7 +31,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-cftests-junit.sh part2
         env:
@@ -54,7 +44,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-cftests-nonjunit.sh
         env:
@@ -69,7 +58,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-cftests-inference-part1.sh
         env:
@@ -84,7 +72,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-cftests-inference-part2.sh
         env:
@@ -98,7 +85,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 1000
       - name: test-typecheck-part1.sh
         env:
@@ -112,7 +98,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 1000
       - name: test-typecheck-part2.sh
         env:
@@ -126,7 +111,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           # Unlimited history for contributors.tex generation.
           fetch-depth: 0
       - name: test-misc.sh
@@ -141,7 +125,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           # Unlimited history for contributors.tex generation.
           fetch-depth: 0
       - name: test-misc.sh
@@ -177,7 +160,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-cftests-junit.sh
         env:
@@ -196,7 +178,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-cftests-junit.sh
         env:
@@ -215,7 +196,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-cftests-junit.sh
         env:
@@ -232,7 +212,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           # Unlimited history for contributors.tex generation.
           fetch-depth: 0
       - name: test-misc.sh
@@ -250,7 +229,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           # Unlimited history for contributors.tex generation.
           fetch-depth: 0
       - name: test-misc.sh
@@ -268,7 +246,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-daikon-part1.sh
         env:
@@ -285,7 +262,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-daikon-part2.sh
         env:
@@ -302,7 +278,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-daikon-part3.sh
         env:
@@ -319,7 +294,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-guava.sh
         env:
@@ -335,7 +309,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          set-safe-directory: true
           fetch-depth: 25
       - name: test-plume-lib.sh
         env:
