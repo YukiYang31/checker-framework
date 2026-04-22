@@ -1,0 +1,319 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+jobs:
+  junit_part1_jdk25:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-cftests-junit.sh part1
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-cftests-junit.sh part1
+
+  junit_part2_jdk25:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-cftests-junit.sh part2
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-cftests-junit.sh part2
+
+  nonjunit_jdk25:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-cftests-nonjunit.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-cftests-nonjunit.sh
+
+  inference_part1_jdk25:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-cftests-inference-part1.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-cftests-inference-part1.sh
+
+  inference_part2_jdk25:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-cftests-inference-part2.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-cftests-inference-part2.sh
+
+  typecheck_part1_jdk25:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1000
+      - name: test-typecheck-part1.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-typecheck-part1.sh
+
+  typecheck_part2_jdk25:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1000
+      - name: test-typecheck-part2.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-typecheck-part2.sh
+
+  misc_jdk25:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/cf-ubuntu-jdk25-plus:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Unlimited history for contributors.tex generation.
+          fetch-depth: 0
+      - name: test-misc.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-misc.sh
+
+  misc_jdk26:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/cf-ubuntu-jdk26-plus:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Unlimited history for contributors.tex generation.
+          fetch-depth: 0
+      - name: test-misc.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "26"
+        run: ./checker/bin-devel/test-misc.sh
+
+  canary_jobs:
+    runs-on: ubuntu-latest
+    needs:
+      - junit_part1_jdk25
+      - junit_part2_jdk25
+      - nonjunit_jdk25
+      - inference_part1_jdk25
+      - inference_part2_jdk25
+      - typecheck_part1_jdk25
+      - typecheck_part2_jdk25
+      - misc_jdk25
+      - misc_jdk26
+    steps:
+      - name: canary_jobs
+        run: true
+
+  junit_jdk17:
+    runs-on: ubuntu-latest
+    needs:
+      - canary_jobs
+      - junit_part1_jdk25
+      - junit_part2_jdk25
+    container:
+      image: mdernst/cf-ubuntu-jdk17:latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-cftests-junit.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "17"
+        run: ./checker/bin-devel/test-cftests-junit.sh
+
+  junit_jdk21:
+    runs-on: ubuntu-latest
+    needs:
+      - canary_jobs
+      - junit_part1_jdk25
+      - junit_part2_jdk25
+    container:
+      image: mdernst/cf-ubuntu-jdk21:latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-cftests-junit.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "21"
+        run: ./checker/bin-devel/test-cftests-junit.sh
+
+  junit_jdk26:
+    runs-on: ubuntu-latest
+    needs:
+      - canary_jobs
+      - junit_part1_jdk25
+      - junit_part2_jdk25
+    container:
+      image: mdernst/cf-ubuntu-jdk26:latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-cftests-junit.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "26"
+        run: ./checker/bin-devel/test-cftests-junit.sh
+
+  misc_jdk17:
+    runs-on: ubuntu-latest
+    needs:
+      - canary_jobs
+      - misc_jdk25
+    container:
+      image: mdernst/cf-ubuntu-jdk17-plus:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Unlimited history for contributors.tex generation.
+          fetch-depth: 0
+      - name: test-misc.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "17"
+        run: ./checker/bin-devel/test-misc.sh
+
+  misc_jdk21:
+    runs-on: ubuntu-latest
+    needs:
+      - canary_jobs
+      - misc_jdk25
+    container:
+      image: mdernst/cf-ubuntu-jdk21-plus:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Unlimited history for contributors.tex generation.
+          fetch-depth: 0
+      - name: test-misc.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "21"
+        run: ./checker/bin-devel/test-misc.sh
+
+  daikon_part1_jdk25:
+    runs-on: ubuntu-latest
+    needs:
+      - canary_jobs
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-daikon-part1.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-daikon-part1.sh
+
+  daikon_part2_jdk25:
+    runs-on: ubuntu-latest
+    needs:
+      - canary_jobs
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-daikon-part2.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-daikon-part2.sh
+
+  daikon_part3_jdk25:
+    runs-on: ubuntu-latest
+    needs:
+      - canary_jobs
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-daikon-part3.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-daikon-part3.sh
+
+  guava_jdk25:
+    runs-on: ubuntu-latest
+    needs:
+      - canary_jobs
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-guava.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-guava.sh
+
+  plume_lib_jdk25:
+    runs-on: ubuntu-latest
+    needs:
+      - canary_jobs
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 25
+      - name: test-plume-lib.sh
+        env:
+          ORG_GRADLE_PROJECT_jdkTestVersion: "25"
+        run: ./checker/bin-devel/test-plume-lib.sh
