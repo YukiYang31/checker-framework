@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import org.checkerframework.checker.modifiability.qual.IteratorPreserveRemove;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
 import org.checkerframework.checker.modifiability.qual.Unshrinkable;
@@ -19,9 +18,9 @@ public class IteratorPrecisionTest {
     @Shrinkable Iterator<String> iterator = list.iterator();
     iterator.remove();
 
-    // should still be ok, but is throwing error.
-    @IteratorPreserveRemove List<String> list2 = new ArrayList<>();
-    @Shrinkable Iterator<String> iterator2 = list2.iterator();
+    // should still be ok
+    List<String> list2 = new ArrayList<>();
+    Iterator<String> iterator2 = list2.iterator();
     iterator2.remove();
   }
 
@@ -29,8 +28,6 @@ public class IteratorPrecisionTest {
     // as expected,
     CopyOnWriteArrayList<String> list = new CopyOnWriteArrayList<>();
     @Unshrinkable Iterator<String> iterator = list.iterator();
-    // :: error: [method.invocation]
-    iterator.remove();
 
     // throw error.
     List<String> list2 = new CopyOnWriteArrayList<>();
@@ -46,18 +43,25 @@ public class IteratorPrecisionTest {
   }
 
   void KeySetIterator() {
-    @Modifiable Map<String, String> map = new LinkedHashMap<>();
+    LinkedHashMap<String, String> map = new LinkedHashMap<>();
     map.put("a", "1");
     map.put("b", "2");
-
-    // should be ok, but is throwing error.
     map.keySet().iterator().remove();
 
-    // ok
-    @IteratorPreserveRemove
     @Shrinkable Set<String> keys = map.keySet();
+    @Shrinkable Iterator<String> iterator = keys.iterator();
+
+    @Modifiable Map<String, String> map2 = new LinkedHashMap<>();
+    map2.put("a", "1");
+    map2.put("b", "2");
+
+    // should be ok
+    map2.keySet().iterator().remove();
+
+    // ok
+    @Shrinkable Set<String> keys2 = map2.keySet();
 
     // The iterator supports remove(), but the type is treated as unknown shrinkability.
-    @Shrinkable Iterator<String> lost = keys.iterator();
+    @Shrinkable Iterator<String> lost = keys2.iterator();
   }
 }

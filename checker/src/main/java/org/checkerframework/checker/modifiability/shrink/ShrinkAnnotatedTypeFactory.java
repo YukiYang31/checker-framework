@@ -17,6 +17,7 @@ import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.PolyModifiable;
 import org.checkerframework.checker.modifiability.qual.PolyShrink;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
+import org.checkerframework.checker.modifiability.qual.UnknownIter;
 import org.checkerframework.checker.modifiability.qual.UnknownModifiability;
 import org.checkerframework.checker.modifiability.qual.UnknownShrink;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
@@ -100,7 +101,9 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
             Shrinkable.class,
             Unshrinkable.class,
             BottomShrink.class,
-            PolyShrink.class));
+            PolyShrink.class,
+            UnknownIter.class,
+            IteratorPreserveRemove.class));
   }
 
   @Override

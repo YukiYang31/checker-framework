@@ -5,16 +5,21 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.checkerframework.framework.qual.DefaultQualifierInHierarchy;
 import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * Collections in the Java Collection Framework whose {@code iterator()} result preserves the
- * ability to call {@code Iterator.remove()}.
+ * The top qualifier in the iterator-remove-preservation hierarchy. Represents unknown behavior
+ * about whether calling {@code iterator()} preserves the ability to call {@code Iterator.remove()}.
+ *
+ * <p>This is the default qualifier for unannotated types in the iterator-remove-preservation
+ * hierarchy.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
-@SubtypeOf(UnknownIter.class)
-public @interface IteratorPreserveRemove {}
+@SubtypeOf({})
+@DefaultQualifierInHierarchy
+public @interface UnknownIter {}
