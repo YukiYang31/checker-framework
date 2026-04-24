@@ -60,7 +60,10 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   /** The {@code @}{@link PolyShrink} qualifier. */
   private AnnotationMirror POLY_SHRINK;
 
-  /** The {@code @}{@link IteratorPreserveRemove} marker annotation. */
+  /** The {@code @}{@link UnknownIter} qualifier (top of iterator-preservation hierarchy). */
+  private AnnotationMirror UNKNOWN_ITER;
+
+  /** The {@code @}{@link IteratorPreserveRemove} qualifier. */
   private AnnotationMirror ITERATOR_PRESERVE_REMOVE;
 
   /**
@@ -83,6 +86,7 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     this.SHRINKABLE = AnnotationBuilder.fromClass(getElementUtils(), Shrinkable.class);
     this.UNSHRINKABLE = AnnotationBuilder.fromClass(getElementUtils(), Unshrinkable.class);
     this.POLY_SHRINK = AnnotationBuilder.fromClass(getElementUtils(), PolyShrink.class);
+    this.UNKNOWN_ITER = AnnotationBuilder.fromClass(getElementUtils(), UnknownIter.class);
     this.ITERATOR_PRESERVE_REMOVE =
         AnnotationBuilder.fromClass(getElementUtils(), IteratorPreserveRemove.class);
 
@@ -144,9 +148,11 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   private void refineIteratorReturnType(
       MethodInvocationTree tree, AnnotatedExecutableType methodType) {
     AnnotatedTypeMirror returnType = methodType.getReturnType();
+    // Keep explicit unshrinkable/shrinkable iterator contracts (for example, CopyOnWriteArrayList,
+    // ArrayList).
     if (returnType.hasPrimaryAnnotation(UNSHRINKABLE)
-        || returnType.hasPrimaryAnnotation(SHRINKABLE)) {
-      // Keep explicit unshrinkable iterator contracts (for example, CopyOnWriteArrayList).
+        || returnType.hasPrimaryAnnotation(SHRINKABLE)
+        || returnType.hasPrimaryAnnotation(POLY_SHRINK)) {
       return;
     }
 
@@ -156,6 +162,7 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     }
     AnnotatedTypeMirror receiverType = getAnnotatedType(receiverTree);
 
+    // all unshrinkable collections' iterators are unshrinkable.
     if (receiverType.hasPrimaryAnnotation(UNSHRINKABLE)) {
       returnType.replaceAnnotation(UNSHRINKABLE);
     }
@@ -165,23 +172,7 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     }
 
     // receiver type is @Shrinkable. check for @IteratorPreserveRemove
-    ExecutableElement invokedMethod = TreeUtils.elementFromUse(tree);
-    boolean receiverTreeHasMarker =
-        AnnotationUtils.containsSameByClass(
-            TreeUtils.typeOf(receiverTree).getAnnotationMirrors(), IteratorPreserveRemove.class);
-    AnnotatedTypeMirror methodReceiverType = methodType.getReceiverType();
-    boolean methodElementReceiverHasMarker =
-        invokedMethod != null
-            && AnnotationUtils.containsSameByClass(
-                invokedMethod.getReceiverType().getAnnotationMirrors(),
-                IteratorPreserveRemove.class);
-    boolean preserveRemove =
-        hasIteratorPreserveRemove(receiverType)
-            || receiverTreeHasMarker
-            || (methodReceiverType != null && hasIteratorPreserveRemove(methodReceiverType))
-            || methodElementReceiverHasMarker;
-
-    if (preserveRemove) {
+    if (hasIteratorPreserveRemove(receiverType)) {
       returnType.replaceAnnotation(SHRINKABLE);
     } else {
       returnType.replaceAnnotation(UNKNOWN_SHRINK);
@@ -253,15 +244,14 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   @Override
   protected QualifierUpperBounds createQualifierUpperBounds() {
     return new QualifierUpperBounds(this) {
-      private final AnnotationMirrorSet unknownShrink =
-          AnnotationMirrorSet.singleton(UNKNOWN_SHRINK);
-
       @Override
       public AnnotationMirrorSet getBoundQualifiers(TypeMirror type) {
         if (TypesUtils.isErasedSubtype(type, mapEntryErasure, types)) {
-          // Elements of a map entry can never be shrunk, so treat them as @UnknownShrink. Even if
-          // they are annotation @Growable in a stubfile.
-          return unknownShrink;
+          // Map.Entry uses fixed upper bounds in both supported hierarchies.
+          AnnotationMirrorSet bounds = new AnnotationMirrorSet();
+          bounds.add(UNKNOWN_SHRINK);
+          bounds.add(UNKNOWN_ITER);
+          return bounds;
         }
         return super.getBoundQualifiers(type);
       }

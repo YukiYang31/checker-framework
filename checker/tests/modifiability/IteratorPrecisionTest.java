@@ -9,7 +9,6 @@ import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
 import org.checkerframework.checker.modifiability.qual.Unshrinkable;
 
-/** Reproduces precision loss through an unannotated Set local from Map.keySet(). */
 public class IteratorPrecisionTest {
 
   void arrayListIterator() {
@@ -40,6 +39,13 @@ public class IteratorPrecisionTest {
     Iterator<String> iterator2 = list2.iterator();
     // :: error: [method.invocation]
     iterator2.remove();
+  }
+
+  void UnmodListIterator() {
+    List<String> list = List.of("a", "b");
+    @Unshrinkable Iterator<String> iterator = list.iterator();
+    // :: error: [method.invocation]
+    iterator.remove();
   }
 
   void KeySetIterator() {
