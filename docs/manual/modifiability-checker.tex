@@ -63,20 +63,22 @@ javac -processor org.checkerframework.checker.modifiability.ModifiabilityChecker
 
 The Modifiability Checker uses \textbf{three independent 4-element
 hierarchies}, one per capability.  Every annotated type carries exactly
-one qualifier from each hierarchy.
+one qualifier from each hierarchy.  The checker also uses a fourth,
+2-element hierarchy to express whether a collection's \code{iterator}
+ preserves the ability to call \code{Iterator.remove()}.
 
 % TODO: add a figure that follows the sturucture of other checker manuals.
 \begin{figure}
   \centering
   \begin{minipage}{0.85\linewidth}
 \begin{verbatim}
-  Grow hierarchy           Shrink hierarchy         Replace hierarchy
+  Grow hierarchy           Shrink hierarchy         Replace hierarchy                  Iterator hierarchy
 
-    @UnknownGrow             @UnknownShrink           @UnknownReplace
-      /      \                 /       \                /       \
- @Growable @Ungrowable   @Shrinkable @Unshrinkable  @Replaceable @Unreplaceable
-      \      /                 \       /                \       /
-    @BottomGrow             @BottomShrink            @BottomReplace
+    @UnknownGrow             @UnknownShrink           @UnknownReplace                     @UnknownIter
+      /      \                 /       \                /       \                              |
+ @Growable @Ungrowable   @Shrinkable @Unshrinkable  @Replaceable @Unreplaceable                |
+      \      /                 \       /                \       /                              |
+    @BottomGrow             @BottomShrink            @BottomReplace                   @IteratorPreserveRemove
 \end{verbatim}
   \end{minipage}
   \caption{The three independent Modifiability qualifier hierarchies.
@@ -159,6 +161,19 @@ No guarantees are made about grow or shrink operations.
 \item[\refqualclass{checker/modifiability/qual}{BottomReplace}]
 The bottom qualifier in the Replace hierarchy.  It is a subtype of both
 \<@Replaceable> and \<@Unreplaceable>.  Programmers should rarely write it.
+
+\item[\refqualclass{checker/modifiability/qual}{UnknownIter}]
+The top qualifier in the iterator-remove-preservation hierarchy.
+The checker cannot determine whether calling \code{iterator()} on this
+collection preserves the ability to call \code{Iterator.remove()}.
+This is the default qualifier for unannotated types in the
+iterator-remove-preservation hierarchy.
+
+\item[\refqualclass{checker/modifiability/qual}{IteratorPreserveRemove}]
+Calling \code{iterator()} on this collection preserves the receiver's
+ability to remove elements: if the collection is \<@Shrinkable>, then
+the resulting \code{Iterator} is \<@Shrinkable> and its
+\code{remove} method may be called.
 
 \end{description}
 
@@ -267,6 +282,20 @@ therefore sets the Grow and Replace hierarchy qualifiers to
     \item \code{@Growable Iterator} $\Rightarrow$
       treated as \code{@UnknownGrow @UnknownShrink @UnknownReplace Iterator}
 \end{itemize}
+
+The iterator returned by a shrinkable collection does not always support
+\code{Iterator.remove()}.  Therefore, when \code{iterator()} is called on
+an \<@Shrinkable> receiver, the result is \<@Shrinkable> only if the
+receiver is also \<@IteratorPreserveRemove>.  Otherwise, the result's
+Shrink qualifier is conservatively \<@UnknownShrink>.  When
+\code{iterator()} is called on an \<@Unshrinkable> receiver, the result
+is \<@Unshrinkable>.
+
+\begin{Verbatim}
+  @IteratorPreserveRemove @Shrinkable List<String> list = ...;
+  @Shrinkable Iterator<String> it = list.iterator();
+  it.remove();  // OK
+\end{Verbatim}
 
 
 \subsectionAndLabel{Polymorphic qualifiers}{modifiability-polymorphic}
@@ -411,3 +440,4 @@ class Demo {
 % LocalWords:  addLast unreplaceable Growability shrinkability replacability
 % LocalWords:  growability Shrinkable Replaceable Ungrowable Unshrinkable
 % LocalWords:  Unreplaceable BottomGrow BottomShrink BottomReplace
+% LocalWords:  UnknownIter IteratorPreserveRemove
