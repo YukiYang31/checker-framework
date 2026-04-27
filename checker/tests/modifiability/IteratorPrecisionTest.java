@@ -24,6 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TransferQueue;
+import org.checkerframework.checker.modifiability.qual.IteratorPreserveRemove;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
@@ -34,6 +35,15 @@ public class IteratorPrecisionTest {
   enum TestEnum {
     A,
     B
+  }
+
+  @IteratorPreserveRemove List<String> list;
+
+  void iteratorChecker() {
+    list =
+        new CopyOnWriteArrayList<>(); // this should not be allowed because CopyOnWriteArrayList's
+    // iterator does not preserve remove
+    @Shrinkable Iterator<String> iterator = list.iterator();
   }
 
   void arrayListIterator() {
