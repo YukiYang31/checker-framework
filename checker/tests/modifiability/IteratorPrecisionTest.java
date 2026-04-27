@@ -2,8 +2,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -16,12 +18,15 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TransferQueue;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
+import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 import org.checkerframework.checker.modifiability.qual.Unshrinkable;
 
 public class IteratorPrecisionTest {
@@ -48,7 +53,7 @@ public class IteratorPrecisionTest {
     CopyOnWriteArrayList<String> list = new CopyOnWriteArrayList<>();
     @Unshrinkable Iterator<String> iterator = list.iterator();
 
-    // throw error.
+    // store CopyOnWriteArrayList as a list, the iterator is @UnknownShrink.
     List<String> list2 = new CopyOnWriteArrayList<>();
     // TODO!!!!: below the Iterator is default to be unknown shrink because the logic goes:
     // if the current iterator return unknown (which is what List.iterator() returns),
@@ -64,18 +69,17 @@ public class IteratorPrecisionTest {
   void UnmodListIterator() {
     List<String> list = List.of("a", "b");
     @Unshrinkable Iterator<String> iterator = list.iterator();
-    // :: error: [method.invocation]
-    iterator.remove();
   }
 
   void KeySetIterator() {
     LinkedHashMap<String, String> map = new LinkedHashMap<>();
     map.put("a", "1");
     map.put("b", "2");
+    // ok
     map.keySet().iterator().remove();
 
     @Shrinkable Set<String> keys = map.keySet();
-    @Shrinkable Iterator<String> iterator = keys.iterator();
+    @Shrinkable Iterator<String> iterator2 = keys.iterator();
 
     @Modifiable Map<String, String> map2 = new LinkedHashMap<>();
     map2.put("a", "1");
@@ -86,9 +90,7 @@ public class IteratorPrecisionTest {
 
     // ok
     @Shrinkable Set<String> keys2 = map2.keySet();
-
-    // The iterator supports remove(), but the type is treated as unknown shrinkability.
-    @Shrinkable Iterator<String> lost = keys2.iterator();
+    @Shrinkable Iterator<String> iter2 = keys2.iterator();
   }
 
   void setIteratorPreservesRemove() {
@@ -142,5 +144,64 @@ public class IteratorPrecisionTest {
     List<String> list = Collections.list(enumeration);
     @Shrinkable Iterator<String> listIterator = list.iterator();
     listIterator.remove();
+  }
+
+  void mapViewIteratorsPreserveRemove() {
+    HashMap<String, String> hashMap = new HashMap<>();
+    @Shrinkable Iterator<String> hashMapKeys = hashMap.keySet().iterator();
+    hashMapKeys.remove();
+    @Shrinkable Iterator<String> hashMapValues = hashMap.values().iterator();
+    hashMapValues.remove();
+    @Shrinkable Iterator<Map.Entry<String, String>> hashMapEntries = hashMap.entrySet().iterator();
+    hashMapEntries.remove();
+
+    LinkedHashMap<String, String> linkedHashMap = new LinkedHashMap<>();
+    @Shrinkable Iterator<String> linkedKeys = linkedHashMap.keySet().iterator();
+    linkedKeys.remove();
+    @Shrinkable Iterator<String> linkedValues = linkedHashMap.values().iterator();
+    linkedValues.remove();
+    @Shrinkable Iterator<Map.Entry<String, String>> linkedEntries = linkedHashMap.entrySet().iterator();
+    linkedEntries.remove();
+
+    EnumMap<TestEnum, String> enumMap = new EnumMap<>(TestEnum.class);
+    @Shrinkable Iterator<TestEnum> enumKeys = enumMap.keySet().iterator();
+    enumKeys.remove();
+    @Shrinkable Iterator<String> enumValues = enumMap.values().iterator();
+    enumValues.remove();
+    @Shrinkable Iterator<Map.Entry<TestEnum, String>> enumEntries = enumMap.entrySet().iterator();
+    enumEntries.remove();
+
+    ConcurrentHashMap<String, String> concurrentHashMap = new ConcurrentHashMap<>();
+    @Shrinkable Iterator<String> concurrentKeys = concurrentHashMap.keySet().iterator();
+    concurrentKeys.remove();
+    @Shrinkable Iterator<String> concurrentValues = concurrentHashMap.values().iterator();
+    concurrentValues.remove();
+    @Shrinkable Iterator<Map.@Modifiable Entry<String, String>> concurrentEntries =
+        concurrentHashMap.entrySet().iterator();
+    concurrentEntries.remove();
+
+    ConcurrentSkipListMap<String, String> skipListMap = new ConcurrentSkipListMap<>();
+    @Shrinkable Iterator<String> skipListKeys = skipListMap.keySet().iterator();
+    skipListKeys.remove();
+    @Shrinkable Iterator<String> skipListValues = skipListMap.values().iterator();
+    skipListValues.remove();
+    @Shrinkable Iterator<Map.@Unmodifiable Entry<String, String>> skipListEntries =
+        skipListMap.entrySet().iterator();
+    skipListEntries.remove();
+  }
+
+  void unmodifiableMapViewIteratorsDoNotPreserveRemove() {
+    @Unmodifiable Map<String, String> map = Map.of("a", "b");
+    @Unshrinkable Iterator<String> keyIterator = map.keySet().iterator();
+    @Unshrinkable Iterator<String> valueIterator = map.values().iterator();
+    @Unshrinkable Iterator<Map.@Unmodifiable Entry<String, String>> entryIterator = map.entrySet().iterator();
+  }
+
+  void unmodifiableMapWrapperViewIteratorsDoNotPreserveRemove() {
+    HashMap<String, String> backing = new HashMap<>();
+    @Unmodifiable Map<String, String> map = Collections.unmodifiableMap(backing);
+    @Unshrinkable Iterator<String> keyIterator = map.keySet().iterator();
+    @Unshrinkable Iterator<String> valueIterator = map.values().iterator();
+    @Unshrinkable Iterator<Map.@Unmodifiable Entry<String, String>> entryIterator = map.entrySet().iterator();
   }
 }
