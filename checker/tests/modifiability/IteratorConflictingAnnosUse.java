@@ -8,8 +8,7 @@ public class IteratorConflictingAnnosUse {
   private final IteratorConflictingAnnosTypeTuple inputTypes =
       new IteratorConflictingAnnosTypeTuple();
 
-  void reproduce() {
-    @Unmodifiable Iterator<String> inputTypeIterator = inputTypes.iterator();
-    inputTypeIterator.hasNext();
+  @Unmodifiable Iterator<String> reproduce() {
+    return inputTypes.iterator();
   }
 }
