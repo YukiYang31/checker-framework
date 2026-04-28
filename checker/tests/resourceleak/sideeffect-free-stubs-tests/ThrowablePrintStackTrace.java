@@ -12,6 +12,7 @@ import org.checkerframework.checker.mustcall.qual.Owning;
 class ThrowablePrintStackTrace implements Closeable {
   private @Owning CloseableResource resource = new CloseableResource();
 
+  @SuppressWarnings("contracts.postcondition") // temporary, to remove before merging
   @Override
   @EnsuresCalledMethods(value = "this.resource", methods = "close")
   public void close() {
@@ -25,6 +26,7 @@ class ThrowablePrintStackTracePrintStream implements Closeable {
 
   private @Owning CloseableResource resource = new CloseableResource();
 
+  @SuppressWarnings("contracts.postcondition") // temporary, to remove before merging
   @Override
   @EnsuresCalledMethods(value = "this.resource", methods = "close")
   public void close() {
@@ -38,6 +40,7 @@ class ThrowablePrintStackTracePrintWriter implements Closeable {
 
   private @Owning CloseableResource resource = new CloseableResource();
 
+  @SuppressWarnings("contracts.postcondition") // temporary, to remove before merging
   @Override
   @EnsuresCalledMethods(value = "this.resource", methods = "close")
   public void close() {

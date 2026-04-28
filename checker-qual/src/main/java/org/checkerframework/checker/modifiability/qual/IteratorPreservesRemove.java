@@ -16,5 +16,5 @@ import org.checkerframework.framework.qual.SubtypeOf;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
-@SubtypeOf(UnknownIter.class)
-public @interface IteratorPreserveRemove {}
+@SubtypeOf(UnknownIteratorPreservesRemove.class)
+public @interface IteratorPreservesRemove {}

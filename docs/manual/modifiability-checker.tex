@@ -72,13 +72,13 @@ one qualifier from each hierarchy.  The checker also uses a fourth,
   \centering
   \begin{minipage}{0.85\linewidth}
 \begin{verbatim}
-  Grow hierarchy           Shrink hierarchy         Replace hierarchy                  Iterator hierarchy
+  Grow hierarchy           Shrink hierarchy              Replace hierarchy             Iterator hierarchy
 
-    @UnknownGrow             @UnknownShrink           @UnknownReplace                     @UnknownIter
-      /      \                 /       \                /       \                              |
- @Growable @Ungrowable   @Shrinkable @Unshrinkable  @Replaceable @Unreplaceable                |
-      \      /                 \       /                \       /                              |
-    @BottomGrow             @BottomShrink            @BottomReplace                   @IteratorPreserveRemove
+    @UnknownGrow             @UnknownShrink               @UnknownReplace          UnknownIteratorPreservesRemove
+      /      \                 /       \                    /       \                          |
+ @Growable @Ungrowable   @Shrinkable @Unshrinkable   @Replaceable @Unreplaceable               |
+      \      /                 \       /                   \       /                          |
+    @BottomGrow             @BottomShrink                @BottomReplace              @IteratorPreservesRemove
 \end{verbatim}
   \end{minipage}
   \caption{The three independent Modifiability qualifier hierarchies.
@@ -117,8 +117,7 @@ collection will throw \code{UnsupportedOperationException}.
 No guarantees are made about shrink or replace operations.
 
 \item[\refqualclass{checker/modifiability/qual}{BottomGrow}]
-The bottom qualifier in the Grow hierarchy.  It is a subtype of both
-\<@Growable> and \<@Ungrowable>.  Programmers should rarely write it.
+The bottom qualifier in the Grow hierarchy.  Programmers should rarely write it.
 
 \item[\refqualclass{checker/modifiability/qual}{UnknownShrink}]
 The top qualifier in the Shrink hierarchy.
@@ -138,8 +137,7 @@ this collection will throw \code{UnsupportedOperationException}.
 No guarantees are made about grow or replace operations.
 
 \item[\refqualclass{checker/modifiability/qual}{BottomShrink}]
-The bottom qualifier in the Shrink hierarchy.  It is a subtype of both
-\<@Shrinkable> and \<@Unshrinkable>.  Programmers should rarely write it.
+The bottom qualifier in the Shrink hierarchy.  Programmers should rarely write it.
 
 \item[\refqualclass{checker/modifiability/qual}{UnknownReplace}]
 The top qualifier in the Replace hierarchy.
@@ -159,17 +157,16 @@ on this collection will throw \code{UnsupportedOperationException}.
 No guarantees are made about grow or shrink operations.
 
 \item[\refqualclass{checker/modifiability/qual}{BottomReplace}]
-The bottom qualifier in the Replace hierarchy.  It is a subtype of both
-\<@Replaceable> and \<@Unreplaceable>.  Programmers should rarely write it.
+The bottom qualifier in the Replace hierarchy.  Programmers should rarely write it.
 
-\item[\refqualclass{checker/modifiability/qual}{UnknownIter}]
+\item[\refqualclass{checker/modifiability/qual}{UnknownIteratorPreservesRemove}]
 The top qualifier in the iterator-remove-preservation hierarchy.
 The checker cannot determine whether calling \code{iterator()} on this
 collection preserves the ability to call \code{Iterator.remove()}.
 This is the default qualifier for unannotated types in the
 iterator-remove-preservation hierarchy.
 
-\item[\refqualclass{checker/modifiability/qual}{IteratorPreserveRemove}]
+\item[\refqualclass{checker/modifiability/qual}{IteratorPreservesRemove}]
 Calling \code{iterator()} on this collection preserves the receiver's
 ability to remove elements: if the collection is \<@Shrinkable>, then
 the resulting \code{Iterator} is \<@Shrinkable> and its
@@ -286,13 +283,13 @@ therefore sets the Grow and Replace hierarchy qualifiers to
 The iterator returned by a shrinkable collection does not always support
 \code{Iterator.remove()}.  Therefore, when \code{iterator()} is called on
 an \<@Shrinkable> receiver, the result is \<@Shrinkable> only if the
-receiver is also \<@IteratorPreserveRemove>.  Otherwise, the result's
+receiver is also \<@IteratorPreservesRemove>.  Otherwise, the result's
 Shrink qualifier is conservatively \<@UnknownShrink>.  When
 \code{iterator()} is called on an \<@Unshrinkable> receiver, the result
 is \<@Unshrinkable>.
 
 \begin{Verbatim}
-  @IteratorPreserveRemove @Shrinkable List<String> list = ...;
+  @IteratorPreservesRemove @Shrinkable List<String> list = ...;
   @Shrinkable Iterator<String> it = list.iterator();
   it.remove();  // OK
 \end{Verbatim}
@@ -440,4 +437,4 @@ class Demo {
 % LocalWords:  addLast unreplaceable Growability shrinkability replacability
 % LocalWords:  growability Shrinkable Replaceable Ungrowable Unshrinkable
 % LocalWords:  Unreplaceable BottomGrow BottomShrink BottomReplace
-% LocalWords:  UnknownIter IteratorPreserveRemove
+% LocalWords:  UnknownIteratorPreservesRemove IteratorPreservesRemove

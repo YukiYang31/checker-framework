@@ -24,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TransferQueue;
-import org.checkerframework.checker.modifiability.qual.IteratorPreserveRemove;
+import org.checkerframework.checker.modifiability.qual.IteratorPreservesRemove;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
@@ -37,7 +37,7 @@ public class IteratorPrecisionTest {
     B
   }
 
-  @IteratorPreserveRemove List<String> list;
+  @IteratorPreservesRemove List<String> list;
 
   void iteratorChecker() {
     list =
@@ -67,7 +67,7 @@ public class IteratorPrecisionTest {
     List<String> list2 = new CopyOnWriteArrayList<>();
     // TODO!!!!: below the Iterator is default to be unknown shrink because the logic goes:
     // if the current iterator return unknown (which is what List.iterator() returns),
-    //    then if the receiver is @Shrinkable and has @IteratorPreserveRemove, then the result is
+    //    then if the receiver is @Shrinkable and has @IteratorPreservesRemove, then the result is
     // @Shrinkable.
     //    otherwise, the result is unknown.
     // think: should we add a special case for CopyOnWriteArrayList to return unshrinkable iterator?
