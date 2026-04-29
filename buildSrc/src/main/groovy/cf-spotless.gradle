@@ -96,6 +96,7 @@ spotless {
         .addTypeAnnotation("BottomReplace")
         .addTypeAnnotation("BottomShrink")
         .addTypeAnnotation("Growable")
+        .addTypeAnnotation("IteratorPreservesRemove")
         .addTypeAnnotation("Modifiable")
         .addTypeAnnotation("PolyGrow")
         .addTypeAnnotation("PolyModifiable")
@@ -103,15 +104,16 @@ spotless {
         .addTypeAnnotation("PolyShrink")
         .addTypeAnnotation("Replaceable")
         .addTypeAnnotation("Shrinkable")
+        .addTypeAnnotation("Ungrowable")
         .addTypeAnnotation("UnknownGrow")
+        .addTypeAnnotation("UnknownIteratorPreservesRemove")
         .addTypeAnnotation("UnknownModifiability")
         .addTypeAnnotation("UnknownReplace")
         .addTypeAnnotation("UnknownShrink")
-        .addTypeAnnotation("Ungrowable")
+        .addTypeAnnotation("Unmodifiable")
         .addTypeAnnotation("Unmodifiable")
         .addTypeAnnotation("Unreplaceable")
         .addTypeAnnotation("Unshrinkable")
-        .addTypeAnnotation("Unmodifiable")
   }
 
   // Only define a groovyGradle task on the root project, for simplicity in setting the target pattern
