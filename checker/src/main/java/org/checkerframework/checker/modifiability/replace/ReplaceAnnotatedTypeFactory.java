@@ -30,7 +30,7 @@ import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.AnnotationMirrorSet;
 import org.checkerframework.javacutil.TypesUtils;
 
-/** The type factory for the Modifiability Checker. */
+/** The annotated type factory for the {@link ReplaceChecker}. */
 public class ReplaceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
 
   /** The erased {@code java.util.Set} type. */
@@ -54,16 +54,16 @@ public class ReplaceAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   // ── Hierarchy qualifiers ──────────
 
   /** The {@code @}{@link UnknownReplace} qualifier (top of Replace hierarchy). */
-  private AnnotationMirror UNKNOWN_REPLACE;
+  private final AnnotationMirror UNKNOWN_REPLACE;
 
   /** The {@code @}{@link Replaceable} qualifier. */
-  private AnnotationMirror REPLACEABLE;
+  private final AnnotationMirror REPLACEABLE;
 
   /** The {@code @}{@link Unreplaceable} qualifier. */
-  private AnnotationMirror UNREPLACEABLE;
+  private final AnnotationMirror UNREPLACEABLE;
 
   /** The {@code @}{@link PolyReplace} qualifier. */
-  private AnnotationMirror POLY_REPLACE;
+  private final AnnotationMirror POLY_REPLACE;
 
   /**
    * Creates a ReplaceAnnotatedTypeFactory.

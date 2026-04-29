@@ -30,7 +30,7 @@ import org.checkerframework.javacutil.AnnotationBuilder;
 import org.checkerframework.javacutil.AnnotationMirrorSet;
 import org.checkerframework.javacutil.TypesUtils;
 
-/** The type factory for the Modifiability Checker. */
+/** The annotated type factory for the {@link GrowChecker}. */
 public class GrowAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
 
   /** The erased {@code java.util.Map.Entry} type. */
@@ -45,16 +45,16 @@ public class GrowAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   // ── Hierarchy qualifiers ──────────
 
   /** The {@code @}{@link UnknownGrow} qualifier (top of Grow hierarchy). */
-  private AnnotationMirror UNKNOWN_GROW;
+  private final AnnotationMirror UNKNOWN_GROW;
 
   /** The {@code @}{@link Growable} qualifier. */
-  private AnnotationMirror GROWABLE;
+  private final AnnotationMirror GROWABLE;
 
   /** The {@code @}{@link Ungrowable} qualifier. */
-  private AnnotationMirror UNGROWABLE;
+  private final AnnotationMirror UNGROWABLE;
 
   /** The {@code @}{@link PolyGrow} qualifier. */
-  private AnnotationMirror POLY_GROW;
+  private final AnnotationMirror POLY_GROW;
 
   /**
    * Creates a GrowAnnotatedTypeFactory.
@@ -116,7 +116,7 @@ public class GrowAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   }
 
   /**
-   * Removes capabilities that cannot be supported by structural constraints of the collection type:
+   * Removes grow capability for types that structurally cannot support it:
    *
    * <ul>
    *   <li>Set or Queue (not LinkedList): remove Replace capability → set Replace to
@@ -167,12 +167,10 @@ public class GrowAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
       @Override
       public AnnotationMirrorSet getBoundQualifiers(TypeMirror type) {
         if (TypesUtils.isErasedSubtype(type, mapEntryErasure, types)) {
-          // Elements of a map entry can never be grown, so treat them as @UnknownGrow. Even if
-          // they are annotation @Growable in a stubfile.
-          return unknownGrow;
+          // Map.Entry cannot be grown.
         } else if (TypesUtils.isErasedSubtype(type, iteratorErasure, types)
             && !TypesUtils.isErasedSubtype(type, listIteratorErasure, types)) {
-          // It's a standard Iterator, but NOT a ListIterator: Drop G bit
+          // Standard Iterator (not ListIterator) cannot be grown.
           return unknownGrow;
         }
         return super.getBoundQualifiers(type);

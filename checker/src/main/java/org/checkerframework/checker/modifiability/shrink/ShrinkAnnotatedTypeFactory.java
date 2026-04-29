@@ -37,7 +37,7 @@ import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.TreeUtils;
 import org.checkerframework.javacutil.TypesUtils;
 
-/** The type factory for the Modifiability Checker. */
+/** The annotated type factory for the {@link ShrinkChecker}. */
 public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
 
   /** The erased {@code java.util.Map.Entry} type. */
@@ -49,25 +49,25 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   // ── Hierarchy qualifiers ──────────
 
   /** The {@code @}{@link UnknownShrink} qualifier (top of Shrink hierarchy). */
-  private AnnotationMirror UNKNOWN_SHRINK;
+  private final AnnotationMirror UNKNOWN_SHRINK;
 
   /** The {@code @}{@link Shrinkable} qualifier. */
-  private AnnotationMirror SHRINKABLE;
+  private final AnnotationMirror SHRINKABLE;
 
   /** The {@code @}{@link Unshrinkable} qualifier. */
-  private AnnotationMirror UNSHRINKABLE;
+  private final AnnotationMirror UNSHRINKABLE;
 
   /** The {@code @}{@link PolyShrink} qualifier. */
-  private AnnotationMirror POLY_SHRINK;
+  private final AnnotationMirror POLY_SHRINK;
 
   /**
    * The {@code @}{@link UnknownIteratorPreservesRemove} qualifier (top of iterator-preservation
    * hierarchy).
    */
-  private AnnotationMirror UNKNOWN_ITER;
+  private final AnnotationMirror UNKNOWN_ITER;
 
   /** The {@code @}{@link IteratorPreservesRemove} qualifier. */
-  private AnnotationMirror ITERATOR_PRESERVE_REMOVE;
+  private final AnnotationMirror ITERATOR_PRESERVE_REMOVE;
 
   /**
    * Creates a ShrinkAnnotatedTypeFactory.
@@ -209,10 +209,10 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
   }
 
   /**
-   * Removes capabilities that cannot be supported by structural constraints of the collection type:
+   * Removes shrink capability for types that structurally cannot support it:
    *
    * <ul>
-   *   <li>Map.Entry: remove Shrink capabilities
+   *   <li>Map.Entry: cannot shrink, set to {@code @UnknownShrink}
    * </ul>
    */
   private class ShrinkTypeAnnotator extends TypeAnnotator {
