@@ -9,6 +9,7 @@ public class IteratorConflictingAnnosUse {
       new IteratorConflictingAnnosTypeTuple();
 
   @Unmodifiable Iterator<String> reproduce() {
+    // :: error: [conflicting.annos]
     return inputTypes.iterator();
   }
 }

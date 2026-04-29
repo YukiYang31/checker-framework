@@ -25,18 +25,22 @@ public class SetRefinementTest {
 
   public SetRefinementTest(List<String> other, int dummy) {
     this.items.set(0, other.get(0));
+    // :: error: [method.invocation]
     this.items.addAll(other);
   }
 
   public SetRefinementTest(List<String> other, boolean dummy) {
     this.items.set(0, other.get(0));
+    // :: error: [method.invocation]
     this.items.set(0, other.get(0));
+    // :: error: [method.invocation]
     this.items.addAll(other);
   }
 
   public SetRefinementTest(List<String> other, float dummy) {
     this.items.get(0);
     this.items.set(0, other.get(0));
+    // :: error: [method.invocation]
     this.items.addAll(other);
   }
 
@@ -82,6 +86,7 @@ public class SetRefinementTest {
     List<String>[] arr = new ArrayList[1];
     arr[0] = new ArrayList<>();
     arr[0].set(0, other.get(0));
+    // :: error: [method.invocation]
     arr[0].addAll(other);
   }
 

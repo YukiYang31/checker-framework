@@ -40,6 +40,7 @@ public class IteratorPrecisionTest {
   @IteratorPreservesRemove List<String> list;
 
   void iteratorChecker() {
+    // :: error: [assignment]
     list =
         new CopyOnWriteArrayList<>(); // this should not be allowed because CopyOnWriteArrayList's
     // iterator does not preserve remove
