@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import org.checkerframework.common.basetype.BaseTypeChecker;
+import org.checkerframework.checker.modifiability.ModifiabilityBaseChecker;
 import org.checkerframework.framework.qual.RelevantJavaTypes;
 import org.checkerframework.framework.qual.StubFiles;
 import org.checkerframework.framework.source.SuppressWarningsPrefix;
@@ -28,7 +28,7 @@ import org.checkerframework.framework.source.SuppressWarningsPrefix;
 })
 @StubFiles({"ical4j.astub", "javaparser.astub"})
 @SuppressWarningsPrefix({"shrinkable", "modifiability"})
-public class ShrinkChecker extends BaseTypeChecker {
+public class ShrinkChecker extends ModifiabilityBaseChecker {
   /** Creates a Shrink checker. */
   public ShrinkChecker() {}
 }
