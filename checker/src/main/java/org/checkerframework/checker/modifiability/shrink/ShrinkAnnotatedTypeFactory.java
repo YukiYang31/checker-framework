@@ -149,6 +149,9 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
    * method receiver type has {@code @IteratorPreservesRemove}, then the result is
    * {@code @Shrinkable Iterator}. Otherwise, shrinkability precision is dropped to
    * {@code @UnknownShrink}.
+   *
+   * @param tree the iterator method invocation
+   * @param methodType the annotated executable type of the invoked method
    */
   private void refineIteratorReturnType(
       MethodInvocationTree tree, AnnotatedExecutableType methodType) {
@@ -186,6 +189,10 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
 
   /**
    * Returns true if this invocation is an instance {@code iterator()} method returning Iterator.
+   *
+   * @param tree the method invocation to test
+   * @param methodType the annotated executable type of the invoked method
+   * @return true if this invocation is an instance {@code iterator()} method returning Iterator
    */
   private boolean isIteratorMethod(MethodInvocationTree tree, AnnotatedExecutableType methodType) {
     if (!tree.getArguments().isEmpty()) {
@@ -199,7 +206,12 @@ public class ShrinkAnnotatedTypeFactory extends BaseAnnotatedTypeFactory {
     return TypesUtils.isErasedSubtype(returnUnderlying, iteratorErasure, types);
   }
 
-  /** Returns true if {@code type} has the {@code @IteratorPreservesRemove} marker annotation. */
+  /**
+   * Returns true if {@code type} has the {@code @IteratorPreservesRemove} marker annotation.
+   *
+   * @param type the type to test
+   * @return true if {@code type} has the {@code @IteratorPreservesRemove} marker annotation
+   */
   private boolean hasIteratorPreservesRemove(AnnotatedTypeMirror type) {
     if (type.hasPrimaryAnnotation(ITERATOR_PRESERVE_REMOVE)) {
       return true;
