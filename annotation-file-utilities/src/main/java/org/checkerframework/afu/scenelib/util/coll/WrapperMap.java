@@ -3,6 +3,8 @@ package org.checkerframework.afu.scenelib.util.coll;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import org.checkerframework.checker.modifiability.qual.IteratorPreservesRemove;
+import org.checkerframework.checker.modifiability.qual.PolyShrink;
 
 /**
  * A {@link WrapperMap} is a map all of whose methods delegate by default to those of a supplied
@@ -37,7 +39,8 @@ public class WrapperMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public Set<java.util.Map.Entry<K, V>> entrySet() {
+  public @IteratorPreservesRemove @PolyShrink Set<java.util.Map.Entry<K, V>> entrySet(
+      @PolyShrink WrapperMap<K, V> this) {
     return back.entrySet();
   }
 

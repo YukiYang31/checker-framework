@@ -880,6 +880,13 @@ subprojects {
         "org.checkerframework.checker.resourceleak.ResourceLeakChecker")
     createCheckTypeTask(project.name, "Signature",
         "org.checkerframework.checker.signature.SignatureChecker")
+    createCheckTypeTask(project.name, "Modifiability",
+        "org.checkerframework.checker.modifiability.ModifiabilityChecker",
+        [
+          "-Awarns",
+          "-Afilenames",
+        ])
+
 
     // The checkNullness task runs on all code, but it only *checks* the following code:
     //  * All files outside the "framework", "checker", and "annotation-file-utilities" subprojects.
