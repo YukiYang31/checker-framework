@@ -3,4 +3,8 @@ package org.checkerframework.checker.modifiability;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 
 /** Base class for the Modifiability sub-checkers. */
-public abstract class ModifiabilityBaseChecker extends BaseTypeChecker {}
+public abstract class ModifiabilityBaseChecker extends BaseTypeChecker {
+
+  /** Creates a new ModifiabilityBaseChecker. */
+  protected ModifiabilityBaseChecker() {}
+}
