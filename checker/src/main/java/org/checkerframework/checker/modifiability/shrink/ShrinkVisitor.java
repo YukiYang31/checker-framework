@@ -14,4 +14,10 @@ public class ShrinkVisitor extends ModifiabilityVisitor {
   public ShrinkVisitor(BaseTypeChecker checker) {
     super(checker);
   }
+
+  @Override
+  protected boolean shouldCheckThrowsUOE() {
+    // When running under ModifiabilityChecker, GrowChecker handles @ThrowsUOE reporting.
+    return checker.getParentChecker() == null;
+  }
 }
