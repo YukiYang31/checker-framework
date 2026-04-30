@@ -74,7 +74,7 @@ one qualifier from each hierarchy.  The checker also uses a fourth,
 \begin{verbatim}
   Grow hierarchy           Shrink hierarchy              Replace hierarchy             Iterator hierarchy
 
-    @UnknownGrow             @UnknownShrink               @UnknownReplace          UnknownIteratorPreservesRemove
+    @UnknownGrow             @UnknownShrink               @UnknownReplace          @UnknownIteratorPreservesRemove
       /      \                 /       \                    /       \                          |
  @Growable @Ungrowable   @Shrinkable @Unshrinkable   @Replaceable @Unreplaceable               |
       \      /                 \       /                    \       /                          |
@@ -237,75 +237,6 @@ Examples using alias annotations:
   @UnknownModifiability List<String> unknown = ...;  // capability is unknown
 \end{Verbatim}
 
-
-\subsectionAndLabel{Types without grow, shrink, and/or replace methods}{types-without-full-gsr}
-
-Some Java types lack methods for certain kinds of mutation.  The
-Modifiability Checker automatically removes capabilities that the type
-cannot support.
-
-\paragraphAndLabel{Set and Queue (except LinkedList).}{modifiability-set-queue}
-The \code{Set} interface has no replace methods (\code{set} is a
-\code{List}-only operation).  Similarly, \code{Queue} has no replace
-methods in general.  The Modifiability Checker therefore sets the
-Replace hierarchy qualifier to \<@UnknownReplace> for any \code{Set} or
-non-\code{LinkedList} \code{Queue}, regardless of what is written on the
-type.  For example:
-
-\begin{itemize}
-    \item \code{@Growable @Shrinkable @Replaceable Set} $\Rightarrow$
-      treated as \code{@Growable @Shrinkable @UnknownReplace Set}
-    \item \code{@Growable @Replaceable Set} $\Rightarrow$
-      treated as \code{@Growable @UnknownShrink @UnknownReplace Set}
-    \item \code{@Growable @Shrinkable Set} $\Rightarrow$ unchanged
-      (\<@UnknownReplace> is already the default)
-\end{itemize}
-
-\paragraphAndLabel{Map.Entry.}{modifiability-map-entry}
-\code{Map.Entry} has only the optional \code{setValue} method (a
-replace operation) and no grow or shrink operations.  The Modifiability
-Checker therefore sets the Grow and Shrink hierarchy qualifiers to
-\<@UnknownGrow> and \<@UnknownShrink> respectively.  For example:
-
-\begin{itemize}
-    \item \code{Map.@Growable @Shrinkable @Replaceable Entry} $\Rightarrow$
-      treated as \code{Map.@UnknownGrow @UnknownShrink @Replaceable Entry}
-    \item \code{Map.@Growable Entry} $\Rightarrow$
-      treated as \code{Map.@UnknownGrow @UnknownShrink @UnknownReplace Entry}
-\end{itemize}
-
-\paragraphAndLabel{Iterator.}{modifiability-iterator}
-\code{Iterator} has only the optional \code{remove} method (a shrink
-operation) and no grow or replace operations.  (Note that
-\code{ListIterator} is treated normally because it also has optional
-\code{add} and \code{set} operations.)  The Modifiability Checker
-therefore sets the Grow and Replace hierarchy qualifiers to
-\<@UnknownGrow> and \<@UnknownReplace>:
-
-\begin{itemize}
-    \item \code{@Modifiable Iterator} $\Rightarrow$
-      treated as \code{@UnknownGrow @Shrinkable @UnknownReplace Iterator}
-    \item \code{@Unmodifiable Iterator} $\Rightarrow$
-      treated as \code{@UnknownGrow @Unshrinkable @UnknownReplace Iterator}
-    \item \code{@Growable Iterator} $\Rightarrow$
-      treated as \code{@UnknownGrow @UnknownShrink @UnknownReplace Iterator}
-\end{itemize}
-
-The iterator returned by a shrinkable collection does not always support
-\code{Iterator.remove()}.  Therefore, when \code{iterator()} is called on
-an \<@Shrinkable> receiver, the result is \<@Shrinkable> only if the
-receiver is also \<@IteratorPreservesRemove>.  Otherwise, the result's
-Shrink qualifier is conservatively \<@UnknownShrink>.  When
-\code{iterator()} is called on an \<@Unshrinkable> receiver, the result
-is \<@Unshrinkable>.
-
-\begin{Verbatim}
-  @IteratorPreservesRemove @Shrinkable List<String> list = ...;
-  @Shrinkable Iterator<String> it = list.iterator();
-  it.remove();  // OK
-\end{Verbatim}
-
-
 \subsectionAndLabel{Polymorphic qualifiers}{modifiability-polymorphic}
 
 A polymorphic qualifier specifies that a method's return type has the
@@ -359,7 +290,6 @@ If the map is \code{@Ungrowable @Unshrinkable @Unreplaceable}, then
 \code{keySet} returns \code{@Ungrowable @Unshrinkable @UnknownReplace Set}.
 
 
-
 \subsectionAndLabel{Modifiability method annotations}{modifiability-method-annotations}
 
 The Modifiability Checker supports one annotation that specifies method
@@ -376,6 +306,83 @@ erroneous.)  The Modifiability Checker issues an error at every call to a
 method annotated with \code{@ThrowsUOE}.
 
 \end{description}
+
+\sectionAndLabel{Types without grow, shrink, and/or replace methods}{types-without-full-gsr}
+
+Some Java types lack methods for certain kinds of mutation.  The
+Modifiability Checker automatically removes capabilities that the type
+cannot support.
+
+\paragraphAndLabel{Set and Queue (except LinkedList).}{modifiability-set-queue}
+The \code{Set} interface has no replace methods (\code{set} is a
+\code{List}-only operation).  Similarly, \code{Queue} has no replace
+methods in general.  The Modifiability Checker therefore sets the
+Replace hierarchy qualifier to \<@UnknownReplace> for any \code{Set} or
+non-\code{LinkedList} \code{Queue}, regardless of what is written on the
+type.  For example:
+
+\begin{itemize}
+    \item \code{@Modifiable Set} $\Rightarrow$
+      treated as \code{@Growable @Shrinkable @UnknownReplace Set}
+    \item \code{@Unmodifiable Set} $\Rightarrow$
+      treated as \code{@Ungrowable @Unshrinkable @UnknownReplace Set}
+    \item \code{@Growable @Replaceable Set} $\Rightarrow$
+      treated as \code{@Growable @UnknownShrink @UnknownReplace Set}
+    \item \code{@Growable @Shrinkable Set} $\Rightarrow$ unchanged
+      (\<@UnknownReplace> is already the default)
+\end{itemize}
+
+\paragraphAndLabel{Map.Entry.}{modifiability-map-entry}
+\code{Map.Entry} has only the optional \code{setValue} method (a
+replace operation) and no grow or shrink operations.  The Modifiability
+Checker therefore sets the Grow and Shrink hierarchy qualifiers to
+\<@UnknownGrow> and \<@UnknownShrink> respectively.  For example:
+
+\begin{itemize}
+    \item \code{Map.@Modifiable Entry} $\Rightarrow$
+      treated as \code{Map.@UnknownGrow @UnknownShrink @Replaceable Entry}
+    \item \code{Map.@Unmodifiable Entry} $\Rightarrow$
+      treated as \code{Map.@UnknownGrow @UnknownShrink @Unreplaceable Entry}
+    \item \code{Map.@Growable Entry} $\Rightarrow$
+      treated as \code{Map.@UnknownGrow @UnknownShrink @UnknownReplace Entry}
+\end{itemize}
+
+\paragraphAndLabel{Iterator.}{modifiability-iterator}
+\code{Iterator} has only the optional \code{remove} method (a shrink
+operation) and no grow or replace operations.  (Note that
+\code{ListIterator} is treated normally because it also has optional
+\code{add} and \code{set} operations.)  The Modifiability Checker
+therefore sets the Grow and Replace hierarchy qualifiers to
+\<@UnknownGrow> and \<@UnknownReplace>:
+
+\begin{itemize}
+    \item \code{@Modifiable Iterator} $\Rightarrow$
+      treated as \code{@UnknownGrow @Shrinkable @UnknownReplace Iterator}
+    \item \code{@Unmodifiable Iterator} $\Rightarrow$
+      treated as \code{@UnknownGrow @Unshrinkable @UnknownReplace Iterator}
+    \item \code{@Growable Iterator} $\Rightarrow$
+      treated as \code{@UnknownGrow @UnknownShrink @UnknownReplace Iterator}
+\end{itemize}
+
+\sectionAndLabel{Iterator Behavior}{modifiability-iterator-behavior}
+
+The iterator returned by a shrinkable collection does not always support
+\code{Iterator.remove()}.  Therefore, when \code{iterator()} is called on
+an \<@Shrinkable> receiver, the result is \<@Shrinkable> only if the
+receiver is also \<@IteratorPreservesRemove>.  Otherwise, the result's
+Shrink qualifier is conservatively \<@UnknownShrink>.  When
+\code{iterator()} is called on an \<@Unshrinkable> receiver, the result
+is \<@Unshrinkable>.
+
+\begin{Verbatim}
+  @IteratorPreservesRemove @Shrinkable List<String> list = ...;
+  @Shrinkable Iterator<String> it = list.iterator();
+  it.remove();  // OK
+
+  @Unshrinkable List<String> list2 = ...;
+  @Unshrinkable Iterator<String> it2 = list2.iterator();
+  it2.remove();  // Error: it2 is @Unshrinkable
+\end{Verbatim}
 
 
 
