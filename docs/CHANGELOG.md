@@ -3,6 +3,18 @@
 <!-- markdownlint-disable no-duplicate-heading -->
 <!-- pyml disable no-duplicate-heading -->
 
+## Version 4.1.1
+
+### User-visible changes
+
+### Implementation details
+
+In `AnnotatedTypeFactory`:
+
+* new overload `canonicalAnnotation(AnnotationMirror, TypeMirror)`
+
+### Closed issues
+
 ## Version 4.1.0 (2026-05-01)
 
 ### User-visible changes
