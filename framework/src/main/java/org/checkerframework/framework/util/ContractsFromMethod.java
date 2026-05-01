@@ -172,7 +172,7 @@ public class ContractsFromMethod {
       for (String expr : expressions) {
         TypeMirror exprType = getExprType(expr, methodDecl);
         AnnotationMirror enforcedQualifier =
-            getQualifierEnforcedByContractAnnotation(contractAnno, null, exprType);
+            getQualifierEnforcedByContractAnnotation(contractAnno, anno, exprType);
         if (enforcedQualifier == null) {
           continue;
         }
@@ -262,10 +262,14 @@ public class ContractsFromMethod {
    * @return the type annotation specified in {@code contractAnno.qualifier}
    */
   private @Nullable AnnotationMirror getQualifierEnforcedByContractAnnotation(
-      AnnotationMirror contractAnno, AnnotationMirror argumentAnno, @Nullable TypeMirror type) {
+      AnnotationMirror contractAnno,
+      @Nullable AnnotationMirror argumentAnno,
+      @Nullable TypeMirror type) {
 
     Map<String, String> argumentRenaming =
-        makeArgumentRenaming(argumentAnno.getAnnotationType().asElement());
+        argumentAnno == null
+            ? Collections.emptyMap()
+            : makeArgumentRenaming(argumentAnno.getAnnotationType().asElement());
     return getQualifierEnforcedByContractAnnotation(
         contractAnno, argumentAnno, argumentRenaming, type);
   }
