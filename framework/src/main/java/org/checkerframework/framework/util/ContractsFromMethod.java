@@ -193,7 +193,7 @@ public class ContractsFromMethod {
    * @param methodDecl the method at which to interpret the expression
    * @return the type of the given expression
    */
-  private TypeMirror getExprType(String expr, MethodTree methodDecl) {
+  private @Nullable TypeMirror getExprType(String expr, @Nullable MethodTree methodDecl) {
     if (methodDecl == null) {
       return null;
     } else {
