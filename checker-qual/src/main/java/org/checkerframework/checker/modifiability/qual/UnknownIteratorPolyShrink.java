@@ -5,19 +5,20 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.checkerframework.framework.qual.DefaultQualifierInHierarchy;
 import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * If a collection's type is {@code @IteratorPreservesRemove}, then its {@code iterator()} method
- * preserves the ability to call {@code Iterator.remove()}. That is, if collection {@code c} has
- * type {@code @Shrinkable}, then {@code c.iterator()} also has type {@code @Shrinkable}. For any
- * collection whose type is {@code @UnknownIteratorPreservesRemove}, its iterator is always
- * {@code @Unshrinkable}.
+ * For the annotated collection, The return type of {@code iterator()} is {@code @Unshrinkable}.
  *
+ * <p>This is the default qualifier for unannotated types.
+ *
+ * @see #IteratorPolyShrink
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
-@SubtypeOf(UnknownIteratorPreservesRemove.class)
-public @interface IteratorPreservesRemove {}
+@SubtypeOf({})
+@DefaultQualifierInHierarchy
+public @interface UnknownIteratorPolyShrink {}

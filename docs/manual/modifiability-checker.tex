@@ -1,19 +1,25 @@
 \chapterAndLabel{Modifiability Checker}{modifiability-checker}
 
+\newcommand{\UnsupportedOperationException}{\<Un\-sup\-port\-ed\-Op\-er\-a\-tion\-Ex\-cep\-tion>}
+
 In Java, an \emph{optional} method is one that a class may or may not
-support.  If the subclass does not support the method, then calling the
-method throws \<UnsupportedOperationException>.  Thus, whenever a client
+support.  (Optional methods are unrelated to the \<Optional> type.)
+If the class does not support the method, then calling the
+method throws \UnsupportedOperationException.  Thus, whenever a client
 calls an optional method, there is a possibility of an exception.  The
 Modifiability Checker eliminates that possibility.
 
 If the Modifiability Checker issues no warning, then your program is
-guaranteed not to throw \code{UnsupportedOperationException} due to
-invoking a mutating method (such as \code{add} or \code{remove}) on an
-unmodifiable collection, map, or iterator.  (This chapter generally uses
-just ``collection'', for brevity.)
+guaranteed not to throw \UnsupportedOperationException\ due to invoking an
+optional method (such as
+\sunjavadoc{java.base/java/util/Collection.html\#add(E)}{add} or
+\sunjavadoc{java.base/java/util/Collection.html\#remove(java.lang.Object)}{remove})
+on an unmodifiable collection.
+(For brevity, this chapter generally uses
+just ``collection'' to mean ``collection, map, or iterator''.)
 
 An \emph{unmodifiable collection} is one that throws
-\code{UnsupportedOperationException} if a mutating method is called.
+\UnsupportedOperationException\ if a mutating method is called.
 The JDK provides many such collections, for example, the results of:
 \begin{itemize}
 \item
@@ -36,21 +42,25 @@ The JDK provides many such collections, for example, the results of:
 \end{itemize}
 
 A \emph{modifiable collection} is one on which mutating methods can be called
-without throwing \code{UnsupportedOperationException}.  Many other methods, such
+without throwing \UnsupportedOperationException.  Many other methods, such
 as \code{get}, \code{contains}, \code{isEmpty}, and \code{toArray}, may be
 called on any collection, whether modifiable or unmodifiable.
 
+Some collections may be modified in some ways but not in others.
 A collection can be modified in three different ways:
 \textbf{Grow}, \textbf{Shrink}, and \textbf{Replace}.
 \begin{itemize}
     \item \textbf{Grow}: The collection can grow by adding new elements
-      (\<add>, \<addAll>, \<offer>, \<addFirst>, \<addLast>, \<ListIterator.add>, \ldots).
+      (\<add>, \<addAll>, \<offer>, \<addFirst>, \<addLast>, \ldots).
     \item \textbf{Shrink}: The collection can shrink by removing
-      existing elements (\<remove>, \<removeAll>, \<clear>, \<retainAll>, \<poll>, \<pop>, \<Iterator.remove>,  \ldots).
+      existing elements (\<remove>, \<removeAll>, \<clear>, \<retainAll>, \<poll>, \<pop>, \ldots).
     \item \textbf{Replace}: The collection can replace existing
       elements with new values at specific locations/keys (\<List.set>, \<Map.replace>, \<Map.replaceAll>,
        \<ListIterator.set>,  \<Collections.sort>, \<Map.Entry.setValue>, \ldots).
 \end{itemize}
+
+\noindent
+Some collections can also be modified through their iterator.
 
 To run the Modifiability Checker:
 
@@ -64,37 +74,80 @@ javac -processor org.checkerframework.checker.modifiability.ModifiabilityChecker
 The Modifiability Checker uses \textbf{three independent 4-element
 hierarchies}, one per capability.  Every annotated type carries exactly
 one qualifier from each hierarchy.  The checker also uses a fourth,
-2-element hierarchy to express whether a collection's \code{iterator}
- preserves the ability to call \code{Iterator.remove()}.
+2-element hierarchy to express whether \<remove()> can be called on
+a collection's iterator.
 
 % TODO: add a figure that follows the sturucture of other checker manuals.
 \begin{figure}
+\begin{smaller}
   \centering
   \begin{minipage}{0.85\linewidth}
 \begin{verbatim}
   Grow hierarchy           Shrink hierarchy              Replace hierarchy             Iterator hierarchy
 
-    @UnknownGrow             @UnknownShrink               @UnknownReplace          @UnknownIteratorPreservesRemove
+    @UnknownGrow             @UnknownShrink               @UnknownReplace          @UnknownIteratorPolyShrink
       /      \                 /       \                    /       \                          |
  @Growable @Ungrowable   @Shrinkable @Unshrinkable   @Replaceable @Unreplaceable               |
       \      /                 \       /                    \       /                          |
-    @BottomGrow             @BottomShrink                @BottomReplace              @IteratorPreservesRemove
+    @BottomGrow             @BottomShrink                @BottomReplace              @IteratorPolyShrink
 \end{verbatim}
   \end{minipage}
-  \caption{The three independent Modifiability qualifier hierarchies.
+\end{smaller}
+  \caption{The four independent Modifiability qualifier hierarchies.
     Each annotated type carries one qualifier from each hierarchy.}
   \label{fig-modifiability-lattice}
 \end{figure}
 
-Figure~\ref{fig-modifiability-lattice} shows the three hierarchies.
-An assignment \code{T x = y} is valid only if the type of \code{y} is a
-subtype of \code{T} in \emph{every} hierarchy simultaneously.  For
+Figure~\ref{fig-modifiability-lattice} shows the hierarchies.
+An assignment \code{T x = y} is valid only if the compile-type of \code{y} is a
+subtype of (or equal to) \code{T} in \emph{every} hierarchy simultaneously.  For
 example, \code{@Growable @UnknownShrink @UnknownReplace List} is a
 subtype of \code{@UnknownGrow @UnknownShrink @UnknownReplace List}
 (because \<@Growable> $\le$ \<@UnknownGrow>), but it is \emph{not} a
 subtype of \code{@Ungrowable @UnknownShrink @UnknownReplace List}
 (because \<@Growable> and \<@Ungrowable> are incomparable siblings in the
 Grow hierarchy).
+
+\subsectionAndLabel{Alias annotations}{modifiability-aliases}
+
+For convenience, the Modifiability Checker provides four alias
+annotations.  They are not part of any hierarchy; the checker expands
+each one into its constituent qualifiers when it appears in source code.
+
+\begin{description}
+
+\item[\refqualclass{checker/modifiability/qual}{Modifiable}]
+Alias for \code{@Growable @Shrinkable @Replaceable} (but see XXXXX for exceptions).
+Calling any mutating operation on this collection will not throw
+\UnsupportedOperationException.
+
+\item[\refqualclass{checker/modifiability/qual}{Unmodifiable}]
+Alias for \code{@Ungrowable @Unshrinkable @Unreplaceable} (but see XXXXX for exceptions).
+The collection is definitely unmodifiable: calling any mutating operation
+always throws \UnsupportedOperationException.
+The checker issues a warning at every invocation of a grow,
+shrink, or replace operation.
+
+\item[\refqualclass{checker/modifiability/qual}{UnknownModifiability}]
+Alias for \code{@UnknownGrow @UnknownShrink @UnknownReplace}.
+The checker cannot determine the modifiability of the collection.
+The checker conservatively issues a warning at every invocation of a grow,
+shrink, or replace operation.
+
+\item[\refqualclass{checker/modifiability/qual}{PolyModifiable}]
+Alias for \code{@PolyGrow @PolyShrink @PolyReplace}
+(see Section~\ref{modifiability-polymorphic}).
+
+\end{description}
+
+\noindent
+Examples using alias annotations:
+
+\begin{Verbatim}
+  @Modifiable List<String> mod = new ArrayList<>();  // all three capabilities
+  @Unmodifiable List<String> unmod = List.of("a");   // no capabilities
+  @UnknownModifiability List<String> unknown = ...;  // capability is unknown
+\end{Verbatim}
 
 \subsectionAndLabel{Hierarchy qualifiers}{modifiability-hierarchy-qualifiers}
 
@@ -108,13 +161,11 @@ Grow hierarchy.
 
 \item[\refqualclass{checker/modifiability/qual}{Growable}]
 Calling grow operations such as \code{add}, \code{addAll}, etc.\ on this
-collection will not result in throwing \code{UnsupportedOperationException}.
-No guarantees are made about shrink or replace operations.
+collection will not result in throwing \UnsupportedOperationException.
 
 \item[\refqualclass{checker/modifiability/qual}{Ungrowable}]
 Calling grow operations such as \code{add}, \code{addAll}, etc.\ on this
-collection will throw \code{UnsupportedOperationException}.
-No guarantees are made about shrink or replace operations.
+collection will throw \UnsupportedOperationException.
 
 \item[\refqualclass{checker/modifiability/qual}{BottomGrow}]
 The bottom qualifier in the Grow hierarchy.  Programmers should rarely write it.
@@ -131,13 +182,11 @@ Shrink hierarchy.
 \item[\refqualclass{checker/modifiability/qual}{Shrinkable}]
 Calling shrink operations such as \code{remove}, \code{clear}, etc.\ on
 this collection will not result in throwing
-\code{UnsupportedOperationException}.
-No guarantees are made about grow or replace operations.
+\UnsupportedOperationException.
 
 \item[\refqualclass{checker/modifiability/qual}{Unshrinkable}]
 Calling shrink operations such as \code{remove}, \code{clear}, etc.\ on
-this collection will throw \code{UnsupportedOperationException}.
-No guarantees are made about grow or replace operations.
+this collection will throw \UnsupportedOperationException.
 
 \item[\refqualclass{checker/modifiability/qual}{BottomShrink}]
 The bottom qualifier in the Shrink hierarchy.  Programmers should rarely write it.
@@ -154,13 +203,11 @@ Replace hierarchy.
 \item[\refqualclass{checker/modifiability/qual}{Replaceable}]
 Calling replace operations such as \code{set}, \code{replaceAll}, etc.\
 on this collection will not result in throwing
-\code{UnsupportedOperationException}.
-No guarantees are made about grow or shrink operations.
+\UnsupportedOperationException.
 
 \item[\refqualclass{checker/modifiability/qual}{Unreplaceable}]
 Calling replace operations such as \code{set}, \code{replaceAll}, etc.\
-on this collection will throw \code{UnsupportedOperationException}.
-No guarantees are made about grow or shrink operations.
+on this collection will throw \UnsupportedOperationException.
 
 \item[\refqualclass{checker/modifiability/qual}{BottomReplace}]
 The bottom qualifier in the Replace hierarchy.  Programmers should rarely write it.
@@ -168,18 +215,16 @@ The bottom qualifier in the Replace hierarchy.  Programmers should rarely write 
 
 Qualifiers in the Iterator hierarchy:
 \begin{description}
-\item[\refqualclass{checker/modifiability/qual}{UnknownIteratorPreservesRemove}]
-The top qualifier in the iterator-remove-preservation hierarchy.
-The checker cannot determine whether calling \code{iterator()} on this
-collection preserves the ability to call \code{Iterator.remove()}.
-This is the default qualifier for unannotated types in the
-iterator-remove-preservation hierarchy.
+\item[\refqualclass{checker/modifiability/qual}{UnknownIteratorPolyShrink}]
+The top qualifier.
+The checker cannot determine whether this collection's \code{iterator()} is
+\<@PolyShrink>.
+This is the default qualifier for unannotated types.
 
-\item[\refqualclass{checker/modifiability/qual}{IteratorPreservesRemove}]
-Calling \code{iterator()} on this collection preserves the receiver's
-ability to remove elements: if the collection is \<@Shrinkable>, then
-the resulting \code{Iterator} is \<@Shrinkable> and its
-\code{remove} method may be called.
+\item[\refqualclass{checker/modifiability/qual}{IteratorPolyShrink}]
+This collection's \code{iterator()} is \<@PolyShrink>.  That is, if
+collection \<c> is \<@Shrinkable>, then \<c.iterator()> is also
+\<@Shrinkable>.
 
 \end{description}
 
@@ -200,43 +245,6 @@ defaults to \<@UnknownReplace> on both sides), but it is \emph{not} a
 subtype of \code{@Growable @Shrinkable @Replaceable List} (the Replace
 hierarchy differs).
 
-\subsectionAndLabel{Alias annotations}{modifiability-aliases}
-
-For convenience, the Modifiability Checker provides four alias
-annotations.  They are not part of any hierarchy; the checker expands
-each one into its constituent qualifiers when it appears in source code.
-
-\begin{description}
-
-\item[\refqualclass{checker/modifiability/qual}{Modifiable}]
-Alias for \code{@Growable @Shrinkable @Replaceable}.
-Calling any mutating operation on this collection will not throw
-\code{UnsupportedOperationException}.
-
-\item[\refqualclass{checker/modifiability/qual}{Unmodifiable}]
-Alias for \code{@Ungrowable @Unshrinkable @Unreplaceable}.
-The collection is definitely unmodifiable: calling any mutating operation
-always throws \code{UnsupportedOperationException}.
-
-\item[\refqualclass{checker/modifiability/qual}{UnknownModifiability}]
-Alias for \code{@UnknownGrow @UnknownShrink @UnknownReplace}.
-The checker cannot determine the modifiability of the collection.
-
-\item[\refqualclass{checker/modifiability/qual}{PolyModifiable}]
-Alias for \code{@PolyGrow @PolyShrink @PolyReplace}
-(see Section~\ref{modifiability-polymorphic}).
-
-\end{description}
-
-\noindent
-Examples using alias annotations:
-
-\begin{Verbatim}
-  @Modifiable List<String> mod = new ArrayList<>();  // all three capabilities
-  @Unmodifiable List<String> unmod = List.of("a");   // no capabilities
-  @UnknownModifiability List<String> unknown = ...;  // capability is unknown
-\end{Verbatim}
-
 \subsectionAndLabel{Polymorphic qualifiers}{modifiability-polymorphic}
 
 A polymorphic qualifier specifies that a method's return type has the
@@ -247,19 +255,19 @@ the receiver).
 
 \item[\refqualclass{checker/modifiability/qual}{PolyGrow}]
 Polymorphic qualifier for the Grow hierarchy.
-The return type's Grow qualifier matches the Grow qualifier of whichever
+The return type's growability matches the growability of whichever
 formal parameter is annotated with \<@PolyGrow>.
 
 \item[\refqualclass{checker/modifiability/qual}{PolyShrink}]
 Polymorphic qualifier for the Shrink hierarchy.
 The return type's Shrink qualifier matches the Shrink qualifier of
 whichever formal parameter is annotated with \<@PolyShrink>.
-Useful for methods such as \code{Map.keySet()} that preserve Shrink while
+Useful for methods such as \code{Map.keySet()} that preserve shrinkability while
 returning an \<@Ungrowable> view.
 
 \item[\refqualclass{checker/modifiability/qual}{PolyReplace}]
 Polymorphic qualifier for the Replace hierarchy.
-The return type's Replace qualifier matches the Replace qualifier of
+The return type's replaceability matches the replaceability of
 whichever formal parameter is annotated with \<@PolyReplace>.
 
 \item[\refqualclass{checker/modifiability/qual}{PolyModifiable}]
@@ -275,8 +283,7 @@ Because the three poly qualifiers are independent, you can mix
 polymorphic and concrete qualifiers across hierarchies.  For example:
 
 \begin{Verbatim}
-  // Shrink is preserved from the map; result is explicitly @Ungrowable.
-  @PolyShrink @Ungrowable Set<K> keySet(@PolyShrink Map<K, V> map)
+  @Ungrowable @PolyShrink Set<K> keySet(@PolyShrink Map<K, V> map)
 \end{Verbatim}
 
 If the map is \code{@Growable @Shrinkable @Replaceable}, then
@@ -293,15 +300,14 @@ If the map is \code{@Ungrowable @Unshrinkable @Unreplaceable}, then
 \subsectionAndLabel{Modifiability method annotations}{modifiability-method-annotations}
 
 The Modifiability Checker supports one annotation that specifies method
-behavior.  This is a declaration annotation, not a type annotation: it
-applies to the method itself rather than to some particular type.
+behavior.
 
 \begin{description}
 
 \item[\refqualclass{checker/modifiability/qual}{ThrowsUOE}]
-This is a declaration annotation (not a type qualifier) that is applied to
-method and constructor declarations.  It indicates that the method always throws
-\code{UnsupportedOperationException}.  (Therefore, any code that calls it is
+When written on a
+method or constructor declaration, it indicates that the method always throws
+\UnsupportedOperationException.  (Therefore, any code that calls it is
 erroneous.)  The Modifiability Checker issues an error at every call to a
 method annotated with \code{@ThrowsUOE}.
 
@@ -309,7 +315,35 @@ method annotated with \code{@ThrowsUOE}.
 
 \sectionAndLabel{Types without grow, shrink, and/or replace methods}{types-without-full-gsr}
 
-Some Java types lack methods for certain kinds of mutation.  The
+Some Java types lack methods for certain kinds of mutation.
+For example, \sunjavadoc{java.base/java/util/Queue.html}{\<Queue>} has
+\<add> and \<remove> methods but no replacement methods.  However, the type
+\<@Replaceable Queue> still makes sense; for example, it is the type of
+\<q> in \<Queue q = new LinkedList();>.
+
+In general, a type is given the top qualifier when it has no method that
+performs the given mutation.  For example, \<Queue> defaults to
+\<@UnknownReplace>.  (In the above assignment, \<q> was flow-sensitively
+refined to have type \<@Replaceable>.
+
+This behavior ensures that code like this type-checks:
+
+\begin{Verbatim}
+@Growable LinkedList list = ...;
+Queue q = list;
+@Growable LinkedList list2 = ...; // still @Growable
+\end{Verbatim}
+
+
+java.base/java/util/Collections.html\#unmodifiableMap(java.util.Map)}{\code{Collections.unmodifiableMap()}}
+
+
+Queue has no replace methods in general
+
+When a
+
+
+The
 Modifiability Checker automatically removes capabilities that the type
 cannot support.
 
@@ -366,16 +400,20 @@ therefore sets the Grow and Replace hierarchy qualifiers to
 
 \sectionAndLabel{Iterator Behavior}{modifiability-iterator-behavior}
 
+By default, calling \<Collection.iterator()> returns an \<@Unshrinkable
+Iterator>.  However
+
+
 The iterator returned by a shrinkable collection does not always support
 \code{Iterator.remove()}.  Therefore, when \code{iterator()} is called on
 an \<@Shrinkable> receiver, the result is \<@Shrinkable> only if the
-receiver is also \<@IteratorPreservesRemove>.  Otherwise, the result's
+receiver is also \<@IteratorPolyShrink>.  Otherwise, the result's
 Shrink qualifier is conservatively \<@UnknownShrink>.  When
 \code{iterator()} is called on an \<@Unshrinkable> receiver, the result
 is \<@Unshrinkable>.
 
 \begin{Verbatim}
-  @IteratorPreservesRemove @Shrinkable List<String> list = ...;
+  @IteratorPolyShrink @Shrinkable List<String> list = ...;
   @Shrinkable Iterator<String> it = list.iterator();
   it.remove();  // OK
 
@@ -455,4 +493,4 @@ class Demo {
 % LocalWords:  addLast unreplaceable Growability shrinkability replacability
 % LocalWords:  growability Shrinkable Replaceable Ungrowable Unshrinkable
 % LocalWords:  Unreplaceable BottomGrow BottomShrink BottomReplace
-% LocalWords:  UnknownIteratorPreservesRemove IteratorPreservesRemove
+% LocalWords:  UnknownIteratorPolyShrink IteratorPolyShrink

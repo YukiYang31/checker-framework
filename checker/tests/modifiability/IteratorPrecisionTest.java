@@ -24,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.TransferQueue;
-import org.checkerframework.checker.modifiability.qual.IteratorPreservesRemove;
+import org.checkerframework.checker.modifiability.qual.IteratorPolyShrink;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.Shrinkable;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
@@ -37,7 +37,7 @@ public class IteratorPrecisionTest {
     B
   }
 
-  @IteratorPreservesRemove List<String> list;
+  @IteratorPolyShrink List<String> list;
 
   void iteratorChecker() {
     // this should not be allowed because CopyOnWriteArrayList's iterator does not preserve remove
@@ -67,7 +67,7 @@ public class IteratorPrecisionTest {
     List<String> list2 = new CopyOnWriteArrayList<>();
     // TODO!!!!: below the Iterator is default to be unknown shrink because the logic goes:
     // if the current iterator return unknown (which is what List.iterator() returns),
-    //    then if the receiver is @Shrinkable and has @IteratorPreservesRemove, then the result is
+    //    then if the receiver is @Shrinkable and has @IteratorPolyShrink, then the result is
     // @Shrinkable.
     //    otherwise, the result is unknown.
     // think: should we add a special case for CopyOnWriteArrayList to return unshrinkable iterator?
@@ -103,7 +103,7 @@ public class IteratorPrecisionTest {
     @Shrinkable Iterator<String> iter2 = keys2.iterator();
   }
 
-  void setIteratorPreservesRemove() {
+  void setIteratorPolyShrink() {
     Set<String> hashSet = new HashSet<>();
     @Shrinkable Iterator<String> hashSetIterator = hashSet.iterator();
     hashSetIterator.remove();
@@ -113,7 +113,7 @@ public class IteratorPrecisionTest {
     treeSetIterator.remove();
   }
 
-  void dequeIteratorPreservesRemove() {
+  void dequeIteratorPolyShrink() {
     Deque<String> arrayDeque = new ArrayDeque<>();
     @Shrinkable Iterator<String> arrayDequeIterator = arrayDeque.iterator();
     arrayDequeIterator.remove();
@@ -123,7 +123,7 @@ public class IteratorPrecisionTest {
     linkedListIterator.remove();
   }
 
-  void queueIteratorPreservesRemove() {
+  void queueIteratorPolyShrink() {
     Queue<String> priorityQueue = new PriorityQueue<>();
     @Shrinkable Iterator<String> priorityQueueIterator = priorityQueue.iterator();
     priorityQueueIterator.remove();
@@ -141,7 +141,7 @@ public class IteratorPrecisionTest {
     linkedTransferQueueIterator.remove();
   }
 
-  void factoryIteratorPreservesRemove() {
+  void factoryIteratorPolyShrink() {
     Set<TestEnum> enumSet = EnumSet.of(TestEnum.A, TestEnum.B);
     @Shrinkable Iterator<TestEnum> enumSetIterator = enumSet.iterator();
     enumSetIterator.remove();
