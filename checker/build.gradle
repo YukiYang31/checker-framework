@@ -89,10 +89,10 @@ generateGitProperties.dependsOn(":installGitHooks")
 def resolvedGitDir = providers.exec {
   workingDir = rootProject.projectDir
   commandLine("git", "rev-parse", "--absolute-git-dir")
-}.standardOutput.asText.map { it.trim() }
+}.standardOutput.asText.map { rootProject.file(it.trim()) }
 
 gitProperties {
-  dotGitDirectory = file(resolvedGitDir.get())
+  dotGitDirectory.set(rootProject.layout.dir(resolvedGitDir))
 }
 
 jar {
