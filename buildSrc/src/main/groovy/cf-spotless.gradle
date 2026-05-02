@@ -111,7 +111,6 @@ spotless {
         .addTypeAnnotation("UnknownReplace")
         .addTypeAnnotation("UnknownShrink")
         .addTypeAnnotation("Unmodifiable")
-        .addTypeAnnotation("Unmodifiable")
         .addTypeAnnotation("Unreplaceable")
         .addTypeAnnotation("Unshrinkable")
   }

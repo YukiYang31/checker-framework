@@ -7,8 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that the annotated method always throws {@link UnsupportedOperationException} when
- * called.
+ * The annotated method always throws {@link UnsupportedOperationException} when called.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */

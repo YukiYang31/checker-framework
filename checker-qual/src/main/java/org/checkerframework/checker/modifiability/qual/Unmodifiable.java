@@ -5,17 +5,15 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Iterator;
 
 /**
- * Convenience alias unually meaning {@code @Ungrowable @Unshrinkable @Unreplaceable}. Calling any
- * mutating operation on this collection (growing, shrinking, or replacing) may throw {@link
+ * Convenience alias usually meaning {@code @Ungrowable @Unshrinkable @Unreplaceable}. Calling a
+ * mutating operation (growing, shrinking, or replacing) may throw {@link
  * UnsupportedOperationException}.
  *
- * <p>As an exception, when written on an {@link Iterator}, this means
- * {@code @Unknowngrowable @Unshrinkable @Unknownreplaceable}. The reason is that every iterator is
- * always {@code @Unknowngrowable} and {@code @Unknownreplaceable}, because {@link Iterator} has no
- * growing or replacing operations.
+ * <p>As an exception, {@code @Unmodifiable} means {@code @Unknown*} if the type does not support a
+ * given category of operation; for example, {@Unmodifiable Iterator} means
+ * {@code @UnknownGrow @UnknownShrink @Unreplaceable Iterator}.)
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */

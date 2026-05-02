@@ -4,14 +4,11 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
 /**
- * Convenience alias meaning {@code @PolyGrow @PolyShrink @PolyReplace}. A polymorphic qualifier for
+ * Convenience alias meaning {@code @PolyGrow @PolyReplace @PolyShrink}. A polymorphic qualifier for
  * all three modifiability hierarchies.
  *
- * <p>This annotation is not part of the type hierarchy; the Modifiability Checker expands it to
- * {@code @PolyGrow @PolyShrink @PolyReplace} on each annotated type.
- *
- * <p>Use on methods that preserve or transfer modifiability &mdash; for example, {@code
- * List.subList()}, {@code iterator()}, or {@code stream()}.
+ * <p>You should write {@code @PolyModifiable} on methods that preserve or transfer modifiability,
+ * such as {@code List.subList()}, {@code iterator()}, and {@code stream()}.
  *
  * <p>For example:
  *
@@ -21,8 +18,9 @@ import java.lang.annotation.Target;
  * }
  * </code></pre>
  *
- * If the receiver is {@code @Unmodifiable}, the return is {@code @Unmodifiable}. If the receiver is
- * {@code @Modifiable}, the return is {@code @Modifiable}.
+ * If the receiver type at a given call site is {@code @Unmodifiable}, the return type at that call
+ * site {@code @Unmodifiable}. If the receiver type is {@code @Modifiable}, the return type is
+ * {@code @Modifiable}. Likewise for growing and shrinking type qualifiers.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  * @checker_framework.manual #qualifier-polymorphism Qualifier polymorphism

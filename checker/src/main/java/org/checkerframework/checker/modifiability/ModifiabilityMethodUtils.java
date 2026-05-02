@@ -12,7 +12,7 @@ public final class ModifiabilityMethodUtils {
   /** The fully-qualified class name of plume-util's collections utilities. */
   private static final String COLLECTIONS_PLUME = "org.plumelib.util.CollectionsPlume";
 
-  /** The method name for removing duplicates from a collection. */
+  /** The method name in CollectionsPlume for removing duplicates from a collection. */
   private static final String WITHOUT_DUPLICATES = "withoutDuplicates";
 
   /** This is a utility class. */

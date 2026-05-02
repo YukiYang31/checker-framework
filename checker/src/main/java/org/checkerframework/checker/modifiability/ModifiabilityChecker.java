@@ -16,9 +16,9 @@ import org.checkerframework.framework.source.SourceChecker;
  * modifiability capability:
  *
  * <ul>
- *   <li>{@link GrowChecker} — checks grow operations (e.g., {@code add}, {@code addAll})
- *   <li>{@link ShrinkChecker} — checks shrink operations (e.g., {@code remove}, {@code clear})
- *   <li>{@link ReplaceChecker} — checks replace operations (e.g., {@code set}, {@code replaceAll})
+ *   <li>{@link GrowChecker} checks grow operations (e.g., {@code add}, {@code addAll})
+ *   <li>{@link ShrinkChecker} checks shrink operations (e.g., {@code remove}, {@code clear})
+ *   <li>{@link ReplaceChecker} checks replace operations (e.g., {@code set}, {@code replaceAll})
  * </ul>
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker

@@ -8,8 +8,11 @@ import java.lang.annotation.Target;
 import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * Collections in the Java Collection Framework whose {@code iterator()} result preserves the
- * ability to call {@code Iterator.remove()}.
+ * If a collection's type is {@code @IteratorPreservesRemove}, then its {@code iterator()} method
+ * preserves the ability to call {@code Iterator.remove()}. That is, if collection {@code c} has
+ * type {@code @Shrinkable}, then {@code c.iterator()} also has type {@code @Shrinkable}. For any
+ * collection whose type is {@code @UnknownIteratorPreservesRemove}, its iterator is always
+ * {@code @Unshrinkable}.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */
