@@ -53,29 +53,14 @@ public class ModifiabilityVisitor extends SourceVisitor<Void, Void> {
 
   @Override
   public Void visitAnnotation(AnnotationTree tree, Void p) {
-    if (!inParameterType && isUnmodifiableParamAnnotation(tree)) {
+    // The implementation of annotationFromAnnotationTree just returns a field of tree, so it's fine
+    // to always get it.
+    AnnotationMirror annotation = TreeUtils.annotationFromAnnotationTree(tree);
+    if (!inParameterType
+        && annotation != null
+        && AnnotationUtils.areSameByName(annotation, unmodifiableParamQualifiedName)) {
       checker.reportError(tree, "unmodparam.location");
     }
     return super.visitAnnotation(tree, p);
-  }
-
-  /**
-   * Returns true if {@code tree} is an {@code @}{@link UnmodifiableParam} annotation.
-   *
-   * @param tree an annotation tree
-   * @return true if {@code tree} is an {@code @UnmodifiableParam} annotation
-   */
-  private boolean isUnmodifiableParamAnnotation(AnnotationTree tree) {
-    String annotationName = tree.getAnnotationType().toString();
-    // Quick check to avoid expensive annotation resolution for most annotations.
-    if (!annotationName.equals("UnmodifiableParam")
-        && !annotationName.endsWith(".UnmodifiableParam")) {
-      return false;
-    }
-
-    AnnotationMirror annotation = TreeUtils.annotationFromAnnotationTree(tree);
-
-    return annotation != null
-        && AnnotationUtils.areSameByName(annotation, unmodifiableParamQualifiedName);
   }
 }
