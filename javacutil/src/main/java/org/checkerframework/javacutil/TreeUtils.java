@@ -183,6 +183,30 @@ public final class TreeUtils {
   }
 
   /**
+   * Returns the explicit {@code this(...)} or {@code super(...)} call in the given constructor's
+   * body, or null if it contains neither.
+   *
+   * @param methodTree a constructor
+   * @return the explicit constructor call in the constructor's body, or null
+   */
+  public static @Nullable MethodInvocationTree getExplicitConstructorCall(MethodTree methodTree) {
+    BlockTree body = methodTree.getBody();
+    if (body == null) {
+      return null;
+    }
+    // The call need not be the first statement:  since Java 25, a constructor may run other
+    // statements before it.
+    for (StatementTree statement : body.getStatements()) {
+      if (statement instanceof ExpressionStatementTree expressionStatement
+          && expressionStatement.getExpression() instanceof MethodInvocationTree invocation
+          && (isThisConstructorCall(invocation) || isSuperConstructorCall(invocation))) {
+        return invocation;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Checks if the method call is a call to the given method name.
    *
    * @param name a method name
@@ -2370,7 +2394,7 @@ public final class TreeUtils {
 
   /**
    * Returns true if the given switch statement tree is an enhanced switch statement, as described
-   * in <a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.11.2">JSL
+   * in <a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.11.2">JLS
    * 14.11.2</a>.
    *
    * @param switchTree the switch statement to check
