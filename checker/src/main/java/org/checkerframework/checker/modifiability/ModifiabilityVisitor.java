@@ -27,6 +27,7 @@ public class ModifiabilityVisitor extends SourceVisitor<Void, Void> {
     this.checker = checker;
   }
 
+  /** True when scanning a formal parameter, including the receiver parameter. */
   boolean inParameterType = false;
 
   /**
