@@ -55,7 +55,7 @@ jobs:
           set-safe-directory: true
           fetch-depth: 0
       - name: clone_plume_scripts
-        run: git clone https://github.com/plume-lib/plume-scripts.git /tmp/plume-scripts
+        run: ./gradlew -q getPlumeScripts
       - name: ci_org_and_branch
         run: ./checker/bin-devel/.plume-scripts/ci-org-and-branch --debug
       - name: git_changes
