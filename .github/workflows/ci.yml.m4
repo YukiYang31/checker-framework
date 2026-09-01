@@ -75,6 +75,8 @@ include([../../.azure/jobs.m4])dnl
       - guava_part2_jdk25
       - plume_lib_jdk25
     runs-on: ubuntu-latest
+    container:
+      image: mdernst/cf-ubuntu-jdk25:latest
     steps:
       - name: Fail if any dependency failed
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
