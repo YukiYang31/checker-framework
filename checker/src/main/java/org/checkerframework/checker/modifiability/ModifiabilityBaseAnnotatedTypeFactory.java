@@ -92,6 +92,11 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
    */
   protected void refineIteratorReturnType(
       MethodInvocationTree tree, AnnotatedExecutableType methodType) {
+    if (!isIteratorMethodInvocation(tree)) {
+      // Some other method that happens to return an Iterator makes no promise about the
+      // modifiability of its result.
+      return;
+    }
     AnnotatedTypeMirror returnType = methodType.getReturnType();
     // Keep explicit ungrowable/growable iterator contracts (for example, CopyOnWriteArrayList,
     // ArrayList).
@@ -123,6 +128,17 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
   }
 
   /**
+   * Returns true if {@code tree} is an invocation of {@code iterator()} or {@code listIterator()}.
+   *
+   * @param tree a method invocation
+   * @return true if {@code tree} is an invocation of {@code iterator()} or {@code listIterator()}
+   */
+  private static boolean isIteratorMethodInvocation(MethodInvocationTree tree) {
+    String methodName = TreeUtils.methodName(tree).toString();
+    return methodName.equals("iterator") || methodName.equals("listIterator");
+  }
+
+  /**
    * Returns the positive capability qualifier.
    *
    * @return the positive capability qualifier
@@ -130,11 +146,22 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
   protected abstract AnnotationMirror positiveCapability();
 
   /**
-   * Returns the negative capability qualifier.
+   * Returns the negative capability qualifier. Only call this method if {@link
+   * #hasNegativeCapability} returns true.
    *
    * @return the negative capability qualifier
    */
   protected abstract AnnotationMirror negativeCapability();
+
+  /**
+   * Returns true if this checker's hierarchy contains a negative qualifier, such as
+   * {@code @Ungrowable}. The Iterator hierarchy does not.
+   *
+   * @return true if this checker's hierarchy contains a negative qualifier
+   */
+  protected boolean hasNegativeCapability() {
+    return true;
+  }
 
   /**
    * Returns the polymorphic capability qualifier.

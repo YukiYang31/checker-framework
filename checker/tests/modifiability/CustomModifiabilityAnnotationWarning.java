@@ -124,8 +124,7 @@ public class CustomModifiabilityAnnotationWarning {
       implements Iterator<String> {}
 
   static class ConstructorLevelMaybeSeqGrowableList extends AbstractList<String> {
-    @MaybeSeqGrowable
-    ConstructorLevelMaybeSeqGrowableList() {}
+    @MaybeSeqGrowable ConstructorLevelMaybeSeqGrowableList() {}
 
     @Override
     public String get(int index) {

@@ -108,26 +108,31 @@ public class ShrinkAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeFa
    * <p>{@code @PolyModifiable} is different: it should usually become {@code @PolyShrinkable}, but
    * for {@code Map.Entry} only the replace bit is meaningful to carry from the map receiver. Its
    * shrink bit is therefore {@code @MaybeShrinkable}.
+   *
+   * <p>When {@code tm} is null, as for an alias written in {@code @DefaultQualifier}, no structural
+   * weakening is applied.
    */
   @Override
   public AnnotationMirror canonicalAnnotation(
       AnnotationMirror annotation, @Nullable TypeMirror tm) {
-    if (tm != null) {
-      if (areSameByClass(annotation, Modifiable.class)) {
-        return typeCannotShrink(tm) ? MAYBE_SHRINKABLE : SHRINKABLE;
-      } else if (areSameByClass(annotation, Unmodifiable.class)) {
-        return typeCannotShrink(tm) ? MAYBE_SHRINKABLE : UNSHRINKABLE;
-      } else if (areSameByClass(annotation, PolyModifiable.class)) {
-        return TypesUtils.isErasedSubtype(tm, mapEntryErasure, types)
-            ? MAYBE_SHRINKABLE
-            : POLY_SHRINKABLE;
-      }
-    }
-    if (areSameByClass(annotation, MaybeModifiable.class)
+    if (areSameByClass(annotation, Modifiable.class)) {
+      return tm != null && typeCannotShrink(tm) ? MAYBE_SHRINKABLE : SHRINKABLE;
+    } else if (areSameByClass(annotation, Unmodifiable.class)) {
+      return tm != null && typeCannotShrink(tm) ? MAYBE_SHRINKABLE : UNSHRINKABLE;
+    } else if (areSameByClass(annotation, PolyModifiable.class)) {
+      return tm != null && TypesUtils.isErasedSubtype(tm, mapEntryErasure, types)
+          ? MAYBE_SHRINKABLE
+          : POLY_SHRINKABLE;
+    } else if (areSameByClass(annotation, MaybeModifiable.class)
         || areSameByClass(annotation, UnmodifiableParam.class)) {
       return MAYBE_SHRINKABLE;
     }
     return super.canonicalAnnotation(annotation);
+  }
+
+  @Override
+  public AnnotationMirror canonicalAnnotation(AnnotationMirror annotation) {
+    return canonicalAnnotation(annotation, null);
   }
 
   @Override

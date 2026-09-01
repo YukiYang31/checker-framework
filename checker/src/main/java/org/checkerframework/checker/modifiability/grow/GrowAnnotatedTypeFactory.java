@@ -114,26 +114,31 @@ public class GrowAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeFact
    * <p>{@code @PolyModifiable} is different: it should usually become {@code @PolyGrowable}, but
    * for {@code Map.Entry} only the replace bit is meaningful to carry from the map receiver. Its
    * grow bit is therefore {@code @MaybeGrowable}.
+   *
+   * <p>When {@code tm} is null, as for an alias written in {@code @DefaultQualifier}, no structural
+   * weakening is applied.
    */
   @Override
   public AnnotationMirror canonicalAnnotation(
       AnnotationMirror annotation, @Nullable TypeMirror tm) {
-    if (tm != null) {
-      if (areSameByClass(annotation, Modifiable.class)) {
-        return typeCannotGrow(tm) ? MAYBE_GROWABLE : GROWABLE;
-      } else if (areSameByClass(annotation, Unmodifiable.class)) {
-        return typeCannotGrow(tm) ? MAYBE_GROWABLE : UNGROWABLE;
-      } else if (areSameByClass(annotation, PolyModifiable.class)) {
-        return TypesUtils.isErasedSubtype(tm, mapEntryErasure, types)
-            ? MAYBE_GROWABLE
-            : POLY_GROWABLE;
-      }
-    }
-    if (areSameByClass(annotation, MaybeModifiable.class)
+    if (areSameByClass(annotation, Modifiable.class)) {
+      return tm != null && typeCannotGrow(tm) ? MAYBE_GROWABLE : GROWABLE;
+    } else if (areSameByClass(annotation, Unmodifiable.class)) {
+      return tm != null && typeCannotGrow(tm) ? MAYBE_GROWABLE : UNGROWABLE;
+    } else if (areSameByClass(annotation, PolyModifiable.class)) {
+      return tm != null && TypesUtils.isErasedSubtype(tm, mapEntryErasure, types)
+          ? MAYBE_GROWABLE
+          : POLY_GROWABLE;
+    } else if (areSameByClass(annotation, MaybeModifiable.class)
         || areSameByClass(annotation, UnmodifiableParam.class)) {
       return MAYBE_GROWABLE;
     }
     return super.canonicalAnnotation(annotation);
+  }
+
+  @Override
+  public AnnotationMirror canonicalAnnotation(AnnotationMirror annotation) {
+    return canonicalAnnotation(annotation, null);
   }
 
   @Override

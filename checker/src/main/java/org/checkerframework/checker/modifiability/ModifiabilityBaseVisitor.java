@@ -129,6 +129,10 @@ public class ModifiabilityBaseVisitor
     //    different type than this class's constructors.
 
     for (MethodTree method : methods) {
+      if (method.getBody() == null) {
+        // The method is abstract or native, so it has no implementation to check.
+        continue;
+      }
       AnnotatedDeclaredType receiverType = atypeFactory.getAnnotatedType(method).getReceiverType();
       if (receiverType != null) {
         AnnotationMirror receiverAnno = receiverType.getAnnotation();
@@ -143,6 +147,7 @@ public class ModifiabilityBaseVisitor
    * Issues an error if the method body does not conform to the given annotation.
    *
    * @param method a method declaration
+   * @param receiverAnno the annotation on the method's receiver parameter
    * @param constructorAnno the annotation on the class constructors
    * @param className the name of the enclosing class, used only for diagnostic messages
    */
@@ -151,37 +156,55 @@ public class ModifiabilityBaseVisitor
       AnnotationMirror receiverAnno,
       AnnotationMirror constructorAnno,
       @FullyQualifiedName String className) {
-    if (AnnotationUtils.areSameByName(receiverAnno, atypeFactory.topAnnotation)) {
+    // Every modifiability hierarchy contains a top qualifier, a positive qualifier, and a
+    // polymorphic qualifier.  Every hierarchy but the Iterator one also contains a negative and a
+    // bottom qualifier.
+    if (AnnotationUtils.areSameByName(receiverAnno, atypeFactory.topAnnotation)
+        || AnnotationUtils.areSameByName(receiverAnno, atypeFactory.polyCapability())
+        || isNegativeCapability(receiverAnno)) {
+      // Nothing to check.
+      return;
+    }
+    if (!AnnotationUtils.areSameByName(receiverAnno, positiveCapability())) {
+      // The only qualifier left is the bottom one.
+      checker.reportError(method, "bottom.annotation.on.receiver");
+      classWarned.add(className);
       return;
     }
 
-    String receiverAnnoName =
-        receiverAnno.getAnnotationType().asElement().getSimpleName().toString();
-
-    if (receiverAnnoName.startsWith("Bottom")) {
-      checker.reportError(method, "bottom.annotation.on.receiver");
-      classWarned.add(className);
-    } else if (receiverAnnoName.startsWith("Un")) {
-      // Nothing to check.
-    } else if (receiverAnnoName.startsWith("Poly")) {
-      // Nothing to check?
+    // The receiver requires the capability, so whether the method body should throw
+    // UnsupportedOperationException depends on the constructor annotation.
+    if (!atypeFactory.hasNegativeCapability()) {
+      // The Iterator hierarchy has no negative qualifier: @IteratorPolyMod states what a
+      // collection's iterator preserves, not whether a method throws
+      // UnsupportedOperationException.
+      return;
+    }
+    String constructorAnnoName =
+        constructorAnno.getAnnotationType().asElement().getSimpleName().toString();
+    if (isNegativeCapability(constructorAnno)) {
+      if (!implIsUOE(method)) {
+        checker.reportError(method, "method.implementation.not.uoe", constructorAnnoName);
+        classWarned.add(className);
+      }
     } else {
-      // The receiver annotation is positive (does not start with "Un").
-      // Behavior now depends on the constructor annotation.
-      String constructorAnnoName =
-          constructorAnno.getAnnotationType().asElement().getSimpleName().toString();
-      if (constructorAnnoName.startsWith("Un")) {
-        if (!implIsUOE(method)) {
-          checker.reportError(method, "method.implementation.not.uoe", constructorAnnoName);
-          classWarned.add(className);
-        }
-      } else {
-        if (implIsUOE(method)) {
-          checker.reportError(method, "method.implementation.is.uoe", constructorAnnoName);
-          classWarned.add(className);
-        }
+      if (implIsUOE(method)) {
+        checker.reportError(method, "method.implementation.is.uoe", constructorAnnoName);
+        classWarned.add(className);
       }
     }
+  }
+
+  /**
+   * Returns true if {@code anno} is this checker's negative qualifier, such as {@code @Ungrowable}.
+   * Always returns false for the Iterator Checker, whose hierarchy has no negative qualifier.
+   *
+   * @param anno an annotation in this checker's modifiability hierarchy
+   * @return true if {@code anno} is this checker's negative qualifier
+   */
+  private boolean isNegativeCapability(AnnotationMirror anno) {
+    return atypeFactory.hasNegativeCapability()
+        && AnnotationUtils.areSameByName(anno, atypeFactory.negativeCapability());
   }
 
   /**
@@ -194,6 +217,10 @@ public class ModifiabilityBaseVisitor
    */
   private boolean implIsUOE(MethodTree method) {
     BlockTree body = method.getBody();
+    if (body == null) {
+      // The method is abstract or native, so it has no body.
+      return false;
+    }
     List<? extends StatementTree> statements = body.getStatements();
     if (statements.size() != 1) {
       return false;

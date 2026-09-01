@@ -289,14 +289,12 @@ public class CollectionsModifiableTest {
     // :: error: [assignment]
     @Modifiable Map<String, String> modM = Collections.unmodifiableMap(m);
 
-    @Growable @Shrinkable @Replaceable @SeqUngrowable
-    SortedSet<String> ss = new TreeSet<>();
+    @Growable @Shrinkable @Replaceable @SeqUngrowable SortedSet<String> ss = new TreeSet<>();
     @Unmodifiable SortedSet<String> unmodSS = Collections.unmodifiableSortedSet(ss);
     // :: error: [method.invocation]
     unmodSS.add("a");
 
-    @Growable @Shrinkable @Replaceable @SeqUngrowable
-    SortedMap<String, String> sm = new TreeMap<>();
+    @Growable @Shrinkable @Replaceable @SeqUngrowable SortedMap<String, String> sm = new TreeMap<>();
     @Unmodifiable SortedMap<String, String> unmodSM = Collections.unmodifiableSortedMap(sm);
     // :: error: [method.invocation]
     unmodSM.put("a", "b");

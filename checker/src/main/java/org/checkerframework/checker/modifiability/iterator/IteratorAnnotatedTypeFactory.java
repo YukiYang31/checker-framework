@@ -56,6 +56,11 @@ public class IteratorAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedType
   }
 
   @Override
+  protected boolean hasNegativeCapability() {
+    return false;
+  }
+
+  @Override
   protected AnnotationMirror polyCapability() {
     return POLY_ITERATOR_POLY_MOD;
   }

@@ -243,7 +243,10 @@ public class AElement implements Cloneable {
    * @param orig the map to copy from
    * @param copy the map to copy into
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({
+    "unchecked",
+    "nullness:argument" // TODO
+  })
   static <K, V extends AElement> void copyMapContents(
       VivifyingMap<K, V> orig, @Growable @Replaceable VivifyingMap<K, V> copy) {
     for (K key : orig.keySet()) {

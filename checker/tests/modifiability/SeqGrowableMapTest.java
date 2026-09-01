@@ -60,8 +60,7 @@ public class SeqGrowableMapTest {
   }
 
   void sortedMapsAreSeqUngrowable() {
-    @Growable @Shrinkable @Replaceable @SeqUngrowable
-    TreeMap<String, Integer> treeMap = new TreeMap<>();
+    @Growable @Shrinkable @Replaceable @SeqUngrowable TreeMap<String, Integer> treeMap = new TreeMap<>();
     treeMap.put("a", 1);
     treeMap.remove("a");
     treeMap.put("b", 2);
@@ -69,8 +68,7 @@ public class SeqGrowableMapTest {
     // :: error: [method.invocation]
     treeMap.putFirst("c", 4);
 
-    @Growable @Shrinkable @Replaceable @SeqUngrowable
-    ConcurrentSkipListMap<String, Integer> concurrentSkipListMap = new ConcurrentSkipListMap<>();
+    @Growable @Shrinkable @Replaceable @SeqUngrowable ConcurrentSkipListMap<String, Integer> concurrentSkipListMap = new ConcurrentSkipListMap<>();
     concurrentSkipListMap.put("a", 1);
     concurrentSkipListMap.remove("a");
     concurrentSkipListMap.put("b", 2);
@@ -84,8 +82,7 @@ public class SeqGrowableMapTest {
     // :: error: [assignment]
     @Modifiable TreeMap<String, Integer> modifiableTreeMap = new TreeMap<>();
 
-    @SeqGrowable
-    ConcurrentSkipListMap<String, Integer> seqGrowableConcurrentSkipListMap =
+    @SeqGrowable ConcurrentSkipListMap<String, Integer> seqGrowableConcurrentSkipListMap =
         // :: error: [assignment]
         new ConcurrentSkipListMap<>();
 

@@ -114,24 +114,29 @@ public class SeqGrowAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeF
    * <p>{@code @Modifiable} and {@code @Unmodifiable} claim all component capabilities, so on types
    * that structurally cannot support sequenced grow operations, such as {@code Iterator}, their
    * SeqGrow component canonicalizes to {@code @MaybeSeqGrowable}.
+   *
+   * <p>When {@code tm} is null, as for an alias written in {@code @DefaultQualifier}, no structural
+   * weakening is applied.
    */
   @Override
   public AnnotationMirror canonicalAnnotation(
       AnnotationMirror annotation, @Nullable TypeMirror tm) {
-    if (tm != null) {
-      if (areSameByClass(annotation, Modifiable.class)) {
-        return typeCanSeqGrow(tm) ? SEQ_GROWABLE : MAYBE_SEQ_GROWABLE;
-      } else if (areSameByClass(annotation, Unmodifiable.class)) {
-        return typeCanSeqGrow(tm) ? SEQ_UNGROWABLE : MAYBE_SEQ_GROWABLE;
-      }
-    }
-    if (areSameByClass(annotation, MaybeModifiable.class)
+    if (areSameByClass(annotation, Modifiable.class)) {
+      return tm == null || typeCanSeqGrow(tm) ? SEQ_GROWABLE : MAYBE_SEQ_GROWABLE;
+    } else if (areSameByClass(annotation, Unmodifiable.class)) {
+      return tm == null || typeCanSeqGrow(tm) ? SEQ_UNGROWABLE : MAYBE_SEQ_GROWABLE;
+    } else if (areSameByClass(annotation, MaybeModifiable.class)
         || areSameByClass(annotation, UnmodifiableParam.class)) {
       return MAYBE_SEQ_GROWABLE;
     } else if (areSameByClass(annotation, PolyModifiable.class)) {
       return POLY_SEQ_GROWABLE;
     }
     return super.canonicalAnnotation(annotation);
+  }
+
+  @Override
+  public AnnotationMirror canonicalAnnotation(AnnotationMirror annotation) {
+    return canonicalAnnotation(annotation, null);
   }
 
   @Override

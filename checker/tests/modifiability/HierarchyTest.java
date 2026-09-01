@@ -158,16 +158,11 @@ class HierarchyTest {
     // :: error: [assignment]
     @SeqGrowable Object sgv5 = unknown;
 
-    @MaybeGrowable @MaybeSeqGrowable
-    Object tv1 = gsg;
-    @MaybeGrowable @MaybeSeqGrowable
-    Object tv2 = g;
-    @MaybeGrowable @MaybeSeqGrowable
-    Object tv3 = sg;
-    @MaybeGrowable @MaybeSeqGrowable
-    Object tv4 = none;
-    @MaybeGrowable @MaybeSeqGrowable
-    Object tv5 = unknown;
+    @MaybeGrowable @MaybeSeqGrowable Object tv1 = gsg;
+    @MaybeGrowable @MaybeSeqGrowable Object tv2 = g;
+    @MaybeGrowable @MaybeSeqGrowable Object tv3 = sg;
+    @MaybeGrowable @MaybeSeqGrowable Object tv4 = none;
+    @MaybeGrowable @MaybeSeqGrowable Object tv5 = unknown;
   }
 
   void testCombinations(

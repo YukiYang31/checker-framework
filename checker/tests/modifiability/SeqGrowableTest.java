@@ -31,8 +31,7 @@ public class SeqGrowableTest {
     @SeqGrowable Vector<String> vector = new Vector<>();
     @SeqGrowable LinkedHashSet<String> linkedHashSet = new LinkedHashSet<>();
     @SeqGrowable CopyOnWriteArrayList<String> copyOnWriteArrayList = new CopyOnWriteArrayList<>();
-    @SeqGrowable
-    ConcurrentLinkedDeque<String> concurrentLinkedDeque = new ConcurrentLinkedDeque<>();
+    @SeqGrowable ConcurrentLinkedDeque<String> concurrentLinkedDeque = new ConcurrentLinkedDeque<>();
     @SeqGrowable LinkedBlockingDeque<String> linkedBlockingDeque = new LinkedBlockingDeque<>();
 
     arrayDeque.addFirst("a");
@@ -78,14 +77,12 @@ public class SeqGrowableTest {
     growableTreeSet.add("a");
 
     @SeqUngrowable TreeSet<String> seqUngrowableTreeSet = new TreeSet<>();
-    @SeqUngrowable
-    ConcurrentSkipListSet<String> seqUngrowableConcurrentSet = new ConcurrentSkipListSet<>();
+    @SeqUngrowable ConcurrentSkipListSet<String> seqUngrowableConcurrentSet = new ConcurrentSkipListSet<>();
 
     // :: error: [assignment]
     @SeqGrowable TreeSet<String> seqGrowableTreeSet = new TreeSet<>();
 
-    @SeqGrowable
-    ConcurrentSkipListSet<String> seqGrowableConcurrentSet =
+    @SeqGrowable ConcurrentSkipListSet<String> seqGrowableConcurrentSet =
         // :: error: [assignment]
         new ConcurrentSkipListSet<>();
   }

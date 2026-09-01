@@ -20,8 +20,7 @@ import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 public class PolyModifiableTest {
 
   /** A simple polymorphic identity method that preserves all four capabilities. */
-  @PolyModifiable @PolyIteratorPolyMod
-  List<String> identity(@PolyModifiable @PolyIteratorPolyMod List<String> x) {
+  @PolyModifiable @PolyIteratorPolyMod List<String> identity(@PolyModifiable @PolyIteratorPolyMod List<String> x) {
     return x;
   }
 

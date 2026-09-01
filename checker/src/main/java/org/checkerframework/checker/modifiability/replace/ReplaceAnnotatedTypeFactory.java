@@ -130,24 +130,29 @@ public class ReplaceAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeF
    * <p>{@code @PolyModifiable} remains {@code @PolyReplaceable}: unlike grow and shrink for {@code
    * Map.Entry}, replacement through {@code Entry.setValue} is a meaningful capability to carry from
    * the map receiver.
+   *
+   * <p>When {@code tm} is null, as for an alias written in {@code @DefaultQualifier}, no structural
+   * weakening is applied.
    */
   @Override
   public AnnotationMirror canonicalAnnotation(
       AnnotationMirror annotation, @Nullable TypeMirror tm) {
-    if (tm != null) {
-      if (areSameByClass(annotation, Modifiable.class)) {
-        return typeCannotReplace(tm) ? MAYBE_REPLACEABLE : REPLACEABLE;
-      } else if (areSameByClass(annotation, Unmodifiable.class)) {
-        return typeCannotReplace(tm) ? MAYBE_REPLACEABLE : UNREPLACEABLE;
-      }
-    }
-    if (areSameByClass(annotation, MaybeModifiable.class)
+    if (areSameByClass(annotation, Modifiable.class)) {
+      return tm != null && typeCannotReplace(tm) ? MAYBE_REPLACEABLE : REPLACEABLE;
+    } else if (areSameByClass(annotation, Unmodifiable.class)) {
+      return tm != null && typeCannotReplace(tm) ? MAYBE_REPLACEABLE : UNREPLACEABLE;
+    } else if (areSameByClass(annotation, MaybeModifiable.class)
         || areSameByClass(annotation, UnmodifiableParam.class)) {
       return MAYBE_REPLACEABLE;
     } else if (areSameByClass(annotation, PolyModifiable.class)) {
       return POLY_REPLACEABLE;
     }
     return super.canonicalAnnotation(annotation);
+  }
+
+  @Override
+  public AnnotationMirror canonicalAnnotation(AnnotationMirror annotation) {
+    return canonicalAnnotation(annotation, null);
   }
 
   @Override
