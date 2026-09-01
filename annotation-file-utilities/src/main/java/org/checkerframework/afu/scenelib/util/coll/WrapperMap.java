@@ -23,7 +23,11 @@ public class WrapperMap<K, V> implements Map<K, V> {
   /** The backing map. */
   protected final @Modifiable Map<K, V> back;
 
-  /** Constructs a new {@link WrapperMap} with the given backing map. */
+  /**
+   * Constructs a new {@link WrapperMap} with the given backing map.
+   *
+   * @param back the backing map
+   */
   protected WrapperMap(@Modifiable Map<K, V> back) {
     this.back = back;
   }

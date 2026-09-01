@@ -197,6 +197,13 @@ public class AElement implements Cloneable {
 
   // Static methods
 
+  /**
+   * Returns a new {@link LinkedHashMap}-backed map from keys to {@link AElement}s, which vivifies
+   * missing values.
+   *
+   * @param <K> the type of the map keys
+   * @return a new vivifying map from keys to {@link AElement}s
+   */
   @SuppressWarnings("modifiability:return")
   static <K extends Object> @Modifiable VivifyingMap<K, AElement> newVivifyingLHMap_AE() {
     return new VivifyingMap<>(new LinkedHashMap<>()) {
@@ -228,6 +235,14 @@ public class AElement implements Cloneable {
     };
   }
 
+  /**
+   * Copies the contents of {@code orig} into {@code copy}, cloning each value.
+   *
+   * @param <K> the type of the map keys
+   * @param <V> the type of the map values
+   * @param orig the map to copy from
+   * @param copy the map to copy into
+   */
   @SuppressWarnings("unchecked")
   static <K, V extends AElement> void copyMapContents(
       VivifyingMap<K, V> orig, @Growable @Replaceable VivifyingMap<K, V> copy) {

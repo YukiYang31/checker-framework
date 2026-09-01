@@ -36,14 +36,17 @@ public class AClass extends ADeclaration {
    */
   public final @Growable VivifyingMap<String, AMethod> methods = createMethodMap();
 
+  /** The class's annotated static initializer blocks; map key is the index of the block. */
   public final @Growable VivifyingMap<Integer, ABlock> staticInits = createInitBlockMap();
 
+  /** The class's annotated instance initializer blocks; map key is the index of the block. */
   public final @Growable VivifyingMap<Integer, ABlock> instanceInits = createInitBlockMap();
 
   /** The class's annotated fields; map key is field name. */
   public final @Growable VivifyingMap<String, AField> fields =
       AField.<String>newVivifyingLHMap_AF();
 
+  /** The class's annotated field initializers; map key is field name. */
   public final @Growable VivifyingMap<String, AExpression> fieldInits = createFieldInitMap();
 
   /**
@@ -229,6 +232,11 @@ public class AClass extends ADeclaration {
 
   // Static methods
 
+  /**
+   * Returns a new map from method signature to {@link AMethod}, which vivifies missing values.
+   *
+   * @return a new vivifying map from method signature to {@link AMethod}
+   */
   @SuppressWarnings("modifiability:return") // TODO
   private static @Modifiable VivifyingMap<String, AMethod> createMethodMap() {
     return new VivifyingMap<>(new LinkedHashMap<>()) {
@@ -244,6 +252,12 @@ public class AClass extends ADeclaration {
     };
   }
 
+  /**
+   * Returns a new map from initializer block index to {@link ABlock}, which vivifies missing
+   * values.
+   *
+   * @return a new vivifying map from initializer block index to {@link ABlock}
+   */
   @SuppressWarnings("modifiability:return") // TODO
   private static @Modifiable VivifyingMap<Integer, ABlock> createInitBlockMap() {
     return new VivifyingMap<>(new LinkedHashMap<>()) {
@@ -259,6 +273,12 @@ public class AClass extends ADeclaration {
     };
   }
 
+  /**
+   * Returns a new map from field name to the {@link AExpression} for its initializer, which
+   * vivifies missing values.
+   *
+   * @return a new vivifying map from field name to field initializer
+   */
   @SuppressWarnings("modifiability:return") // TODO
   private static @Modifiable VivifyingMap<String, AExpression> createFieldInitMap() {
     return new VivifyingMap<>(new LinkedHashMap<>()) {
