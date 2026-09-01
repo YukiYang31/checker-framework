@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import org.checkerframework.afu.scenelib.type.Type;
 import org.checkerframework.checker.modifiability.qual.Growable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * An insertion for a default constructor, which is generated when a class has no explicit
@@ -12,7 +13,7 @@ import org.checkerframework.checker.modifiability.qual.Growable;
  */
 public class ConstructorInsertion extends TypedInsertion {
   /** The insertion for the constructor's receiver parameter, or null if there is none. */
-  private ReceiverInsertion receiverInsertion = null;
+  private @Nullable ReceiverInsertion receiverInsertion = null;
 
   /** The declaration annotations to write on the generated constructor. */
   private @Growable Set<Insertion> declarationInsertions = new LinkedHashSet<>();
