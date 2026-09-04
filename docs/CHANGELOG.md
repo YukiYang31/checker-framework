@@ -3,6 +3,20 @@
 <!-- markdownlint-disable no-duplicate-heading -->
 <!-- pyml disable no-duplicate-heading -->
 
+## Version 4.2.4 (2026-10-01)
+
+### User-visible changes
+
+### Changes for type system implementers
+
+`AnnotatedTypeMirror.hashCode()` now hashes only the top-level type rather than
+recursively hashing component types.  Removed class `HashcodeAtmVisitor`, field
+`AnnotatedTypeMirror.HASHCODE_VISITOR`, and method
+`AnnotatedTypeMirror.getUnderlyingTypeHashCode()`, which existed only to compute
+the old hash code.
+
+### Closed issues
+
 ## Version 4.2.3 (2026-09-01)
 
 ### User-visible changes
@@ -10,14 +24,17 @@
 The `-AsuggestPureMethods` command-line option and the `purity.effectively.pure`
 warning no longer require `-AcheckPurityAnnotations` to also be supplied.
 
-### Implementation details
+### Changes for type system implementers
 
 Made the field `Java8InferenceContext.pathToExpression` private; use
 `getPathToExpression()` and `setPathToExpression()` instead.
 
+Renamed `TreeUtils.isLikeDiamondMemberReference()` to `isRawTypedMemberReference()`.
+
 ### Closed issues
 
-\#7684.
+\#2816, #7677, #7678, #7681, #7682, #7684, #7693, #7694, #7696, #7698, #7701,
+\#7702, #7875, #8046, #8047, #8048, #8050, #8052.
 
 ## Version 4.2.2 (2026-08-06)
 
