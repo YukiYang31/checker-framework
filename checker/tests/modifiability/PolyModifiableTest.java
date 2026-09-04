@@ -14,12 +14,14 @@ import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 
 /**
  * Tests @PolyModifiable, which expands
- * to @PolyGrowable @PolySeqGrowable @PolyShrinkable @PolyReplaceable @PolyIteratorPolyMod and thus
- * preserves all five capabilities independently.
+ * to @PolyGrowable @PolySeqGrowable @PolyShrinkable @PolyReplaceable and thus preserves all four
+ * capabilities independently. The alias does not expand into the Iterator hierarchy, so a method
+ * that must also preserve @IteratorPolyMod writes @PolyIteratorPolyMod explicitly, as `identity`
+ * below does.
  */
 public class PolyModifiableTest {
 
-  /** A simple polymorphic identity method that preserves all four capabilities. */
+  /** A simple polymorphic identity method that preserves all five hierarchies. */
   @PolyModifiable @PolyIteratorPolyMod List<String> identity(@PolyModifiable @PolyIteratorPolyMod List<String> x) {
     return x;
   }

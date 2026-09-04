@@ -14,25 +14,8 @@ public class IdentityHashMapModifiableTest {
     boolean removed = identityMap.remove("key", "value2");
   }
 
-  // this type rule is not implemented yet
-  // void testViews() {
-  //     @Modifiable IdentityHashMap<String, String> identityMap = new IdentityHashMap<>();
-
-  //     // Views (keySet, values, entrySet) usually throw UOE on add operations
-  //     // :: error: [method.invocation]
-  //     identityMap.keySet().add("newKey");
-
-  //     // :: error: [method.invocation]
-  //     identityMap.values().add("newValue");
-
-  //     // :: error: [method.invocation]
-  //     identityMap.entrySet().add(new AbstractMap.SimpleEntry<>("newKey", "newValue"));
-
-  //     // However, removal is supported, so these should be allowed:
-  //     identityMap.keySet().remove("key");
-  //     identityMap.values().remove("value");
-  //     identityMap.entrySet().remove(new AbstractMap.SimpleEntry<>("key", "value"));
-  // }
+  // TODO: The checker does not yet know that a map's keySet(), values(), and entrySet() views
+  // support removal but not addition.
 
   void testEntries() {
     @Modifiable IdentityHashMap<String, String> identityMap = new IdentityHashMap<>();
@@ -49,9 +32,9 @@ public class IdentityHashMapModifiableTest {
     // Stream/Spliterator returns immutable entries
     if (!identityMap.isEmpty()) {
       Map.Entry<String, String> entry = identityMap.entrySet().stream().findFirst().get();
-      // This throws UOE at runtime, but we could only make entrySet.iterator() and
-      // entrySet.stream() return the
-      // same mutability. So this is potentially unsound.
+      // TODO: This throws UnsupportedOperationException at run time, but the checker gives
+      // entrySet().stream() the same modifiability as entrySet().iterator(), so the checker is
+      // unsound here.
       entry.setValue("modified");
     }
   }

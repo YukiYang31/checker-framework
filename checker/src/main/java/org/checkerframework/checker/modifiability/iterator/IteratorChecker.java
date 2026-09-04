@@ -23,4 +23,10 @@ import org.checkerframework.framework.source.SuppressWarningsPrefix;
 public class IteratorChecker extends ModifiabilityBaseChecker {
   /** Creates an IteratorChecker. */
   public IteratorChecker() {}
+
+  @Override
+  protected boolean usesIteratorChecker() {
+    // This checker would otherwise be its own subchecker.
+    return false;
+  }
 }

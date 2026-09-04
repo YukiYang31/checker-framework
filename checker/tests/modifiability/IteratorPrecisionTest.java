@@ -71,12 +71,12 @@ public class IteratorPrecisionTest {
 
     // store CopyOnWriteArrayList as a list, the iterator is @MaybeShrinkable.
     List<String> list2 = new CopyOnWriteArrayList<>();
-    // TODO!!!!: below the Iterator is default to be unknown shrink because the logic goes:
-    // if the current iterator return unknown (which is what List.iterator() returns),
-    //    then if the receiver is @Shrinkable and has @IteratorPolyMod, then the result is
-    // @Shrinkable.
-    //    otherwise, the result is unknown.
-    // think: should we add a special case for CopyOnWriteArrayList to return unshrinkable iterator?
+    // The iterator below is @MaybeShrinkable.  List.iterator() declares no shrink qualifier, so
+    // refineIteratorReturnType uses the receiver: a @Shrinkable receiver that is also
+    // @IteratorPolyMod yields a @Shrinkable result, and every other receiver yields the top
+    // qualifier.  Here the receiver's static type is List, which is not @IteratorPolyMod.
+    // TODO: Consider giving CopyOnWriteArrayList an @Unshrinkable iterator, so that the result is
+    // @Unshrinkable rather than @MaybeShrinkable even through a List-typed reference.
     Iterator<String> iterator2 = list2.iterator();
     // :: error: [method.invocation]
     iterator2.remove();

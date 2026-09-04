@@ -17,6 +17,9 @@ public class ModifiabilityVisitor extends SourceVisitor<Void, Void> {
   /** {@link ModifiabilityChecker}. */
   private final ModifiabilityChecker checker;
 
+  /** True when scanning a formal parameter type, including the receiver parameter. */
+  private boolean inParameterType = false;
+
   /**
    * Creates a {@link SourceVisitor} to use for scanning a source tree.
    *
@@ -27,14 +30,13 @@ public class ModifiabilityVisitor extends SourceVisitor<Void, Void> {
     this.checker = checker;
   }
 
-  /** True when scanning a formal parameter, including the receiver parameter. */
-  boolean inParameterType = false;
-
   /**
-   * Collects the {@code @UnmodifiableParam} annotations that are permitted in this method's formal
-   * and receiver parameters. Pushes them on the stack before visiting the method body, then pops
-   * the stack. {@link #visitAnnotation} uses the stack entry to distinguish allowed parameter
-   * annotations from disallowed uses elsewhere in the same method.
+   * Sets {@link #inParameterType} while scanning this method's formal and receiver parameters, so
+   * that {@link #visitAnnotation} can distinguish an allowed {@code @UnmodifiableParam} in a
+   * parameter type from a disallowed one elsewhere in the same method.
+   *
+   * <p>The field needs no save-and-restore discipline, because a method declaration cannot appear
+   * within a formal parameter.
    */
   @Override
   public Void visitMethod(MethodTree tree, Void p) {

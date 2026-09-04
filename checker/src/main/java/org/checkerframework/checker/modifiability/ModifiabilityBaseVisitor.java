@@ -29,13 +29,18 @@ import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.TreeUtils;
 
 /**
- * Base visitor for the modifiability sub-checkers (Grow, SeqGrow, Shrink, Replace).
+ * Base visitor for the modifiability sub-checkers (Grow, SeqGrow, Shrink, Replace, and Iterator).
  *
- * <p>This class contains logic shared across all four sub-checkers:
+ * <p>This class contains logic shared across all the sub-checkers:
  *
  * <ul>
  *   <li>Suppressing the "constructor result must be TOP" check, since collection constructors may
  *       legitimately produce {@code @Modifiable}.
+ *   <li>Requiring all the constructors of a class to declare the same result qualifier, and
+ *       requiring each method body to agree with that qualifier about whether the method throws
+ *       {@link UnsupportedOperationException}.
+ *   <li>Requiring an override to preserve a positive receiver capability of the method it
+ *       overrides.
  * </ul>
  */
 public class ModifiabilityBaseVisitor
@@ -104,7 +109,11 @@ public class ModifiabilityBaseVisitor
       AnnotatedExecutableType constructorType = atypeFactory.getAnnotatedType(constructor);
       AnnotatedTypeMirror returnType = constructorType.getReturnType();
       AnnotationMirror thisResultAnno =
-          returnType.getPrimaryAnnotationInHierarchy(atypeFactory.topAnnotation);
+          returnType.getPrimaryAnnotationInHierarchy(atypeFactory.topAnnotation());
+      if (thisResultAnno == null) {
+        // The result type has no qualifier in this hierarchy, so there is nothing to compare.
+        continue;
+      }
       if (constructorAnno == null) {
         constructorAnno = thisResultAnno;
       } else if (!AnnotationUtils.areSameByName(thisResultAnno, constructorAnno)) {
@@ -136,7 +145,9 @@ public class ModifiabilityBaseVisitor
       AnnotatedDeclaredType receiverType = atypeFactory.getAnnotatedType(method).getReceiverType();
       if (receiverType != null) {
         AnnotationMirror receiverAnno = receiverType.getAnnotation();
-        checkImplOK(method, receiverAnno, constructorAnno, className);
+        if (receiverAnno != null) {
+          checkImplOK(method, receiverAnno, constructorAnno, className);
+        }
       }
     }
 
@@ -159,7 +170,7 @@ public class ModifiabilityBaseVisitor
     // Every modifiability hierarchy contains a top qualifier, a positive qualifier, and a
     // polymorphic qualifier.  Every hierarchy but the Iterator one also contains a negative and a
     // bottom qualifier.
-    if (AnnotationUtils.areSameByName(receiverAnno, atypeFactory.topAnnotation)
+    if (AnnotationUtils.areSameByName(receiverAnno, atypeFactory.topAnnotation())
         || AnnotationUtils.areSameByName(receiverAnno, atypeFactory.polyCapability())
         || isNegativeCapability(receiverAnno)) {
       // Nothing to check.
@@ -208,12 +219,11 @@ public class ModifiabilityBaseVisitor
   }
 
   /**
-   * Returns true if the method body is exactly {@code throws new
+   * Returns true if the method body is exactly {@code throw new
    * UnsupportedOperationException(...)}.
    *
    * @param method a method declaration
-   * @return true if the method body is exactly {@code throws new
-   *     UnsupportedOperationException(...)}
+   * @return true if the method body is exactly {@code throw new UnsupportedOperationException(...)}
    */
   private boolean implIsUOE(MethodTree method) {
     BlockTree body = method.getBody();
@@ -270,22 +280,20 @@ public class ModifiabilityBaseVisitor
    * <p>For example:
    *
    * <pre>{@code
-   * class List {
-   *   void add(@Growable List<String> list) {
-   *     // ...
-   *   }
+   * abstract class Super {
+   *   abstract void add(@Growable Super this, String s);
    * }
    *
-   * class A extends List {
+   * class Sub extends Super {
    *   @Override
-   *   void add() {
+   *   void add(@MaybeGrowable Sub this, String s) {
    *     throw new UnsupportedOperationException();
    *   }
    * }
    * }</pre>
    *
-   * <p>Without requiring the override to preserve the {@code @Growable} receiver, {@code A.add()}
-   * would be permitted even when {@code A} is only {@code @MaybeMod}.
+   * <p>Without requiring the override to preserve the {@code @Growable} receiver, {@code Sub.add()}
+   * would be permitted even though the body always throws {@link UnsupportedOperationException}.
    */
   @Override
   protected boolean checkOverride(

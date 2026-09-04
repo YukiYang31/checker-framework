@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import org.checkerframework.checker.modifiability.qual.Growable;
-import org.checkerframework.checker.modifiability.qual.IteratorPolyMod;
 import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.PolyModifiable;
 import org.checkerframework.checker.modifiability.qual.Replaceable;
@@ -100,8 +99,7 @@ public class WrapperMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public @IteratorPolyMod @PolyModifiable Collection<V> values(
-      @PolyModifiable WrapperMap<K, V> this) {
+  public @PolyModifiable Collection<V> values(@PolyModifiable WrapperMap<K, V> this) {
     return back.values();
   }
 

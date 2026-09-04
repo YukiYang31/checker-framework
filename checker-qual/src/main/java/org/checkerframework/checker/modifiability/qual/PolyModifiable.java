@@ -8,8 +8,11 @@ import java.lang.annotation.Target;
 
 /**
  * Convenience alias meaning
- * {@code @PolyGrowable @PolyReplaceable @PolyShrinkable @PolySeqGrowable @PolyIteratorPolyMod}. A
- * polymorphic qualifier for all five modifiability hierarchies.
+ * {@code @PolyGrowable @PolySeqGrowable @PolyShrinkable @PolyReplaceable}. A polymorphic qualifier
+ * for the four capability hierarchies.
+ *
+ * <p>This alias does not expand into the Iterator hierarchy. Write {@code @PolyIteratorPolyMod}
+ * explicitly to make a method preserve {@code @IteratorPolyMod}.
  *
  * <p>Write {@code @PolyModifiable} on methods that preserve or transfer modifiability, such as
  * {@code List.subList()}.
@@ -17,8 +20,8 @@ import java.lang.annotation.Target;
  * <p>For example:
  *
  * <pre><code>
- * class Example {
- * &nbsp; @PolyModifiable List&lt;E&gt; subList(@PolyModifiable List&lt;E&gt; this, int from, int to);
+ * interface Example&lt;E&gt; {
+ * &nbsp; @PolyModifiable List&lt;E&gt; subList(@PolyModifiable Example&lt;E&gt; this, int from, int to);
  * }
  * </code></pre>
  *

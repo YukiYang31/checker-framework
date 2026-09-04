@@ -9,7 +9,10 @@ import org.checkerframework.framework.qual.DefaultQualifierInHierarchy;
 import org.checkerframework.framework.qual.SubtypeOf;
 
 /**
- * For the annotated collection, the return type of {@code iterator()} is {@code @MaybeShrinkable}.
+ * The top qualifier in the Iterator hierarchy. The iterator of the annotated collection is not
+ * known to preserve the collection's modifiability, so the result of {@code iterator()} and {@code
+ * listIterator()} is the top qualifier in every capability hierarchy: {@code @MaybeShrinkable}, and
+ * for a {@code ListIterator} also {@code @MaybeGrowable} and {@code @MaybeReplaceable}.
  *
  * <p>This is the default qualifier for unannotated types.
  *

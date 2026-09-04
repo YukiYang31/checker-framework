@@ -21,7 +21,7 @@ import org.checkerframework.checker.modifiability.qual.SeqUngrowable;
 
 public class SeqGrowableTest {
 
-  // :: error: declaration.inconsistent.with.implements.clause
+  // :: error: [declaration.inconsistent.with.implements.clause]
   abstract static @SeqGrowable class UserDefinedSortedSet implements SortedSet<String> {}
 
   void constructorPositiveCases() {

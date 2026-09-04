@@ -25,4 +25,10 @@ import org.checkerframework.framework.source.SuppressWarningsPrefix;
 public class SeqGrowChecker extends ModifiabilityBaseChecker {
   /** Creates a SeqGrowChecker. */
   public SeqGrowChecker() {}
+
+  @Override
+  protected boolean usesIteratorChecker() {
+    // An iterator has no sequenced-grow methods, so this checker never refines an iterator result.
+    return false;
+  }
 }

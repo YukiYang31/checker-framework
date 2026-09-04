@@ -53,7 +53,7 @@ public abstract class VivifyingMap<K, V> extends WrapperMap<K, V> {
   protected abstract V createValueFor(K k);
 
   /** Prunes this map by deleting entries with empty values. */
-  @SuppressWarnings("modifiability:assignment") // TODO
+  @SuppressWarnings("modifiability:assignment") // entrySet() is not @IteratorPolyMod.
   public void prune() {
     // It would be cleaner to write
     //   for (Map.Entry<K, V> entry : entrySet()) {

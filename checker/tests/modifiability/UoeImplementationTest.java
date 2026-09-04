@@ -29,7 +29,7 @@ public class UoeImplementationTest {
       throw new UnsupportedOperationException();
     }
 
-    // :: error: (method.implementation.not.uoe)
+    // :: error: [method.implementation.not.uoe]
     public void growDoesNotThrow(@Growable UngrowableList this) {}
   }
 
@@ -50,7 +50,7 @@ public class UoeImplementationTest {
 
     public void growDoesNotThrow(@Growable GrowableList this) {}
 
-    // :: error: (method.implementation.is.uoe)
+    // :: error: [method.implementation.is.uoe]
     public void growThrows(@Growable GrowableList this) {
       throw new UnsupportedOperationException();
     }
@@ -82,7 +82,7 @@ public class UoeImplementationTest {
       throw new UnsupportedOperationException();
     }
 
-    // :: error: (method.implementation.not.uoe)
+    // :: error: [method.implementation.not.uoe]
     public void seqGrowDoesNotThrow(@SeqGrowable SeqUngrowableList this) {}
   }
 
@@ -101,7 +101,7 @@ public class UoeImplementationTest {
 
     public void seqGrowDoesNotThrow(@SeqGrowable SeqGrowableList this) {}
 
-    // :: error: (method.implementation.is.uoe)
+    // :: error: [method.implementation.is.uoe]
     public void seqGrowThrows(@SeqGrowable SeqGrowableList this) {
       throw new UnsupportedOperationException();
     }

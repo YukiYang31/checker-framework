@@ -10,7 +10,6 @@ called if they are supported, thus eliminating the possibility of an
 (It is possible to write a checker that warns about other unsupported
 methods, but the Modifiability Checker focuses on those issued when modifying collections.)
 
-%% (Optional methods are unrelated to the \<Optional> type.) [[ I would just remove this sentence it is distracting.]]
 An example of an optional method is
 \sunjavadoc{java.base/java/util/Collection.html\#add(E)}{add}.  Some
 subclasses of \<Collection> support \<add>, and others (such as the
@@ -82,7 +81,7 @@ A collection may support modifying a collection through one or more of the capab
       support sequential grow operations (like \<addFirst> and
       \<addLast>).  The declaration of \<TreeSet> is annotated as \<@Growable @SeqUngrowable>.
 
-      ``Sequential Grow'' is shorted to ``SeqGrow'' in the rest of the manual.
+      ``Sequential Grow'' is shortened to ``SeqGrow'' in the rest of the manual.
     \item \textbf{Shrink}: The collection can shrink by removing
       existing elements (\<remove>, \<removeAll>, \<clear>, \<retainAll>, \<poll>, \<pop>, \ldots).
     \item \textbf{Replace}: The collection can replace existing
@@ -147,8 +146,9 @@ capability; it may not drop or weaken the requirement.
 The Modifiability Checker uses \textbf{multiple independent 4-element
 hierarchies}, one per capability.  Every collection type carries exactly
 one qualifier from each hierarchy.  The checker also uses an additional
-2-element hierarchy to express whether \<remove()> can be called on
-a collection's iterator.
+2-element hierarchy to express whether a collection's iterator preserves the
+collection's capabilities:  whether \<remove()> can be called on the iterator,
+and, for a \<ListIterator>, whether \<add()> and \<set()> can be called.
 
 \begin{figure}
 \begin{smaller}
@@ -609,7 +609,7 @@ Here are examples of its use:
   it3.remove();  // Error: list3 does not have @IteratorPolyMod
 \end{Verbatim}
 
-\sectionAndLabel{Unverified collection implementation annotations}{class.unverified}
+\sectionAndLabel{Unverified collection implementation annotations}{modifiability-class-unverified}
 
 The Modifiability Checker verifies uses of collection modifiability annotations,
 but it does not verify collection implementations.

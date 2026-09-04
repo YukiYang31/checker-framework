@@ -1,31 +1,21 @@
 package org.checkerframework.checker.modifiability.replace;
 
-import com.sun.source.tree.MethodInvocationTree;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.modifiability.ModifiabilityBaseAnnotatedTypeFactory;
 import org.checkerframework.checker.modifiability.qual.BottomReplaceable;
-import org.checkerframework.checker.modifiability.qual.MaybeModifiable;
 import org.checkerframework.checker.modifiability.qual.MaybeReplaceable;
-import org.checkerframework.checker.modifiability.qual.Modifiable;
-import org.checkerframework.checker.modifiability.qual.PolyModifiable;
 import org.checkerframework.checker.modifiability.qual.PolyReplaceable;
-import org.checkerframework.checker.modifiability.qual.PreservesModifiability;
 import org.checkerframework.checker.modifiability.qual.Replaceable;
-import org.checkerframework.checker.modifiability.qual.Unmodifiable;
-import org.checkerframework.checker.modifiability.qual.UnmodifiableParam;
 import org.checkerframework.checker.modifiability.qual.Unreplaceable;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.basetype.BaseTypeChecker;
-import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedExecutableType;
 import org.checkerframework.javacutil.AnnotationBuilder;
-import org.checkerframework.javacutil.TreeUtils;
 import org.checkerframework.javacutil.TypesUtils;
 
 /** The annotated type factory for the {@link ReplaceChecker}. */
@@ -42,14 +32,6 @@ public class ReplaceAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeF
 
   /** The erased {@code java.util.LinkedList} type. */
   private final TypeMirror linkedListErasure;
-
-  /** The erased {@code java.util.Iterator} type. */
-  private final TypeMirror iteratorErasure;
-
-  /** The erased {@code java.util.ListIterator} type. */
-  private final TypeMirror listIteratorErasure;
-
-  // -- Hierarchy qualifiers ----------
 
   /** The {@code @}{@link MaybeReplaceable} qualifier. */
   private final AnnotationMirror MAYBE_REPLACEABLE;
@@ -71,25 +53,20 @@ public class ReplaceAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeF
   @SuppressWarnings("this-escape")
   public ReplaceAnnotatedTypeFactory(BaseTypeChecker checker) {
     super(checker);
-
-    this.setErasure = types.erasure(elements.getTypeElement("java.util.Set").asType());
-    this.collectionErasure =
-        types.erasure(elements.getTypeElement("java.util.Collection").asType());
-    this.queueErasure = types.erasure(elements.getTypeElement("java.util.Queue").asType());
-    this.linkedListErasure =
-        types.erasure(elements.getTypeElement("java.util.LinkedList").asType());
-    this.iteratorErasure = types.erasure(elements.getTypeElement("java.util.Iterator").asType());
-    this.listIteratorErasure =
-        types.erasure(elements.getTypeElement("java.util.ListIterator").asType());
-
-    // Initialize annotation mirrors after the hierarchy is established.
+    this.setErasure = erasureOf("java.util.Set");
+    this.collectionErasure = erasureOf("java.util.Collection");
+    this.queueErasure = erasureOf("java.util.Queue");
+    this.linkedListErasure = erasureOf("java.util.LinkedList");
     this.MAYBE_REPLACEABLE = AnnotationBuilder.fromClass(elements, MaybeReplaceable.class);
     this.REPLACEABLE = AnnotationBuilder.fromClass(elements, Replaceable.class);
     this.UNREPLACEABLE = AnnotationBuilder.fromClass(elements, Unreplaceable.class);
     this.POLY_REPLACEABLE = AnnotationBuilder.fromClass(elements, PolyReplaceable.class);
-    this.topAnnotation = MAYBE_REPLACEABLE;
-
     postInit();
+  }
+
+  @Override
+  protected AnnotationMirror topAnnotation() {
+    return MAYBE_REPLACEABLE;
   }
 
   @Override
@@ -119,79 +96,29 @@ public class ReplaceAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeF
   }
 
   /**
-   * Expands whole-modifiability aliases into this hierarchy, with structural weakening only for
-   * aliases whose meaning depends on the annotated type.
-   *
-   * <p>{@code @Modifiable} and {@code @Unmodifiable} claim all component capabilities, so on types
-   * that cannot replace structurally, such as exact {@code Collection}, {@code Set}, non-{@code
-   * LinkedList} {@code Queue}, and non-{@code ListIterator} {@code Iterator}, their replace
-   * component canonicalizes to {@code @MaybeReplaceable}.
-   *
-   * <p>{@code @PolyModifiable} remains {@code @PolyReplaceable}: unlike grow and shrink for {@code
-   * Map.Entry}, replacement through {@code Entry.setValue} is a meaningful capability to carry from
-   * the map receiver.
-   *
-   * <p>When {@code tm} is null, as for an alias written in {@code @DefaultQualifier}, no structural
-   * weakening is applied.
+   * An exact {@code Collection}, a {@code Set}, a non-{@code LinkedList} {@code Queue}, and a
+   * non-{@code ListIterator} {@code Iterator} have no replace methods, so {@code @Modifiable} and
+   * {@code @Unmodifiable} make no claim about them.
    */
   @Override
-  public AnnotationMirror canonicalAnnotation(
-      AnnotationMirror annotation, @Nullable TypeMirror tm) {
-    if (areSameByClass(annotation, Modifiable.class)) {
-      return tm != null && typeCannotReplace(tm) ? MAYBE_REPLACEABLE : REPLACEABLE;
-    } else if (areSameByClass(annotation, Unmodifiable.class)) {
-      return tm != null && typeCannotReplace(tm) ? MAYBE_REPLACEABLE : UNREPLACEABLE;
-    } else if (areSameByClass(annotation, MaybeModifiable.class)
-        || areSameByClass(annotation, UnmodifiableParam.class)) {
-      return MAYBE_REPLACEABLE;
-    } else if (areSameByClass(annotation, PolyModifiable.class)) {
-      return POLY_REPLACEABLE;
-    }
-    return super.canonicalAnnotation(annotation);
-  }
-
-  @Override
-  public AnnotationMirror canonicalAnnotation(AnnotationMirror annotation) {
-    return canonicalAnnotation(annotation, null);
-  }
-
-  @Override
-  protected ParameterizedExecutableType methodFromUse(
-      MethodInvocationTree tree, boolean inferTypeArgs) {
-    ParameterizedExecutableType mType = super.methodFromUse(tree, inferTypeArgs);
-    AnnotatedExecutableType method = mType.executableType();
-
-    // if the method is listIterator().
-    TypeMirror returnUnderlying = method.getReturnType().getUnderlyingType();
-    if (TypesUtils.isErasedSubtype(returnUnderlying, listIteratorErasure, types)) {
-      refineIteratorReturnType(tree, method);
-    }
-
-    // if the method is annotated @PreservesModifiability
-    ExecutableElement invokedMethod = TreeUtils.elementFromUse(tree);
-    if (getDeclAnnotation(invokedMethod, PreservesModifiability.class) != null) {
-      refinePreservesModifiabilityReturnType(tree, method);
-    }
-
-    return mType;
-  }
-
-  /**
-   * Returns true if {@code type} structurally cannot support replace operations.
-   *
-   * @param type the type to test
-   * @return true if {@code type} structurally cannot support replace operations
-   */
-  private boolean typeCannotReplace(TypeMirror type) {
+  protected boolean typeLacksCapability(TypeMirror type) {
     if (type.getKind() != TypeKind.DECLARED) {
       return false;
     }
-    TypeMirror erasedType = types.erasure(type);
-    return types.isSameType(erasedType, collectionErasure)
+    return types.isSameType(types.erasure(type), collectionErasure)
         || TypesUtils.isErasedSubtype(type, setErasure, types)
         || (TypesUtils.isErasedSubtype(type, queueErasure, types)
             && !TypesUtils.isErasedSubtype(type, linkedListErasure, types))
         || (TypesUtils.isErasedSubtype(type, iteratorErasure, types)
             && !TypesUtils.isErasedSubtype(type, listIteratorErasure, types));
+  }
+
+  // polyLacksCapability is not overridden: unlike grow and shrink for Map.Entry, replacement
+  // through Entry.setValue is a meaningful capability to carry from the map receiver.
+
+  @Override
+  protected @Nullable TypeMirror refinedIteratorResultBound() {
+    // A plain Iterator cannot replace, so only a ListIterator result is refined.
+    return listIteratorErasure;
   }
 }

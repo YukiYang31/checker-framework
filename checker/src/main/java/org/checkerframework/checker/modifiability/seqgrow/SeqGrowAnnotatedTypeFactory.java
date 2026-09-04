@@ -1,41 +1,31 @@
 package org.checkerframework.checker.modifiability.seqgrow;
 
-import com.sun.source.tree.MethodInvocationTree;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.modifiability.ModifiabilityBaseAnnotatedTypeFactory;
 import org.checkerframework.checker.modifiability.qual.BottomSeqGrowable;
-import org.checkerframework.checker.modifiability.qual.MaybeModifiable;
 import org.checkerframework.checker.modifiability.qual.MaybeSeqGrowable;
-import org.checkerframework.checker.modifiability.qual.Modifiable;
-import org.checkerframework.checker.modifiability.qual.PolyModifiable;
 import org.checkerframework.checker.modifiability.qual.PolySeqGrowable;
-import org.checkerframework.checker.modifiability.qual.PreservesModifiability;
 import org.checkerframework.checker.modifiability.qual.SeqGrowable;
 import org.checkerframework.checker.modifiability.qual.SeqUngrowable;
-import org.checkerframework.checker.modifiability.qual.Unmodifiable;
-import org.checkerframework.checker.modifiability.qual.UnmodifiableParam;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.basetype.BaseTypeChecker;
-import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedExecutableType;
 import org.checkerframework.javacutil.AnnotationBuilder;
-import org.checkerframework.javacutil.TreeUtils;
 import org.checkerframework.javacutil.TypesUtils;
 
 /** The annotated type factory for the {@link SeqGrowChecker}. */
 public class SeqGrowAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeFactory {
 
-  /** The erased {@code java.util.SequencedCollection} type. */
+  /** The erased {@code java.util.SequencedCollection} type, or null on a JDK before Java 21. */
   private final @Nullable TypeMirror sequencedCollectionErasure;
 
-  /** The erased {@code java.util.SequencedMap} type. */
+  /** The erased {@code java.util.SequencedMap} type, or null on a JDK before Java 21. */
   private final @Nullable TypeMirror sequencedMapErasure;
 
   /** The erased {@code java.util.Deque} type. */
@@ -61,24 +51,30 @@ public class SeqGrowAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeF
   @SuppressWarnings("this-escape")
   public SeqGrowAnnotatedTypeFactory(BaseTypeChecker checker) {
     super(checker);
-
-    TypeElement sequencedCollectionElement =
-        elements.getTypeElement("java.util.SequencedCollection");
-    this.sequencedCollectionErasure =
-        sequencedCollectionElement == null
-            ? null
-            : types.erasure(sequencedCollectionElement.asType());
-    TypeElement sequencedMapElement = elements.getTypeElement("java.util.SequencedMap");
-    this.sequencedMapErasure =
-        sequencedMapElement == null ? null : types.erasure(sequencedMapElement.asType());
-    this.dequeErasure = types.erasure(elements.getTypeElement("java.util.Deque").asType());
+    this.sequencedCollectionErasure = optionalErasureOf("java.util.SequencedCollection");
+    this.sequencedMapErasure = optionalErasureOf("java.util.SequencedMap");
+    this.dequeErasure = erasureOf("java.util.Deque");
     this.MAYBE_SEQ_GROWABLE = AnnotationBuilder.fromClass(elements, MaybeSeqGrowable.class);
     this.SEQ_GROWABLE = AnnotationBuilder.fromClass(elements, SeqGrowable.class);
     this.SEQ_UNGROWABLE = AnnotationBuilder.fromClass(elements, SeqUngrowable.class);
     this.POLY_SEQ_GROWABLE = AnnotationBuilder.fromClass(elements, PolySeqGrowable.class);
-    this.topAnnotation = MAYBE_SEQ_GROWABLE;
-
     postInit();
+  }
+
+  /**
+   * Returns the erasure of the named type, or null if the type is not present on this JDK.
+   *
+   * @param canonicalName the canonical name of a type that may not be present
+   * @return the erasure of the named type, or null
+   */
+  private @Nullable TypeMirror optionalErasureOf(String canonicalName) {
+    TypeElement element = elements.getTypeElement(canonicalName);
+    return element == null ? null : types.erasure(element.asType());
+  }
+
+  @Override
+  protected AnnotationMirror topAnnotation() {
+    return MAYBE_SEQ_GROWABLE;
   }
 
   @Override
@@ -108,70 +104,24 @@ public class SeqGrowAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeF
   }
 
   /**
-   * Expands whole-modifiability aliases into this hierarchy, with structural weakening only for
-   * aliases whose meaning depends on the annotated type.
+   * Only sequenced collections and sequenced maps have sequenced-grow methods, so
+   * {@code @Modifiable} and {@code @Unmodifiable} make no claim about any other type. This is an
+   * allowlist, unlike the blocklists of the other capabilities.
    *
-   * <p>{@code @Modifiable} and {@code @Unmodifiable} claim all component capabilities, so on types
-   * that structurally cannot support sequenced grow operations, such as {@code Iterator}, their
-   * SeqGrow component canonicalizes to {@code @MaybeSeqGrowable}.
-   *
-   * <p>When {@code tm} is null, as for an alias written in {@code @DefaultQualifier}, no structural
-   * weakening is applied.
+   * <p>On JDKs before Java 21, {@code SequencedCollection} and {@code SequencedMap} are not
+   * present, but {@code Deque} still has first/last insertion methods.
    */
   @Override
-  public AnnotationMirror canonicalAnnotation(
-      AnnotationMirror annotation, @Nullable TypeMirror tm) {
-    if (areSameByClass(annotation, Modifiable.class)) {
-      return tm == null || typeCanSeqGrow(tm) ? SEQ_GROWABLE : MAYBE_SEQ_GROWABLE;
-    } else if (areSameByClass(annotation, Unmodifiable.class)) {
-      return tm == null || typeCanSeqGrow(tm) ? SEQ_UNGROWABLE : MAYBE_SEQ_GROWABLE;
-    } else if (areSameByClass(annotation, MaybeModifiable.class)
-        || areSameByClass(annotation, UnmodifiableParam.class)) {
-      return MAYBE_SEQ_GROWABLE;
-    } else if (areSameByClass(annotation, PolyModifiable.class)) {
-      return POLY_SEQ_GROWABLE;
-    }
-    return super.canonicalAnnotation(annotation);
-  }
-
-  @Override
-  public AnnotationMirror canonicalAnnotation(AnnotationMirror annotation) {
-    return canonicalAnnotation(annotation, null);
-  }
-
-  @Override
-  protected ParameterizedExecutableType methodFromUse(
-      MethodInvocationTree tree, boolean inferTypeArgs) {
-    ParameterizedExecutableType mType = super.methodFromUse(tree, inferTypeArgs);
-    AnnotatedExecutableType method = mType.executableType();
-
-    // if the method is annotated @PreservesModifiability
-    ExecutableElement invokedMethod = TreeUtils.elementFromUse(tree);
-    if (getDeclAnnotation(invokedMethod, PreservesModifiability.class) != null) {
-      refinePreservesModifiabilityReturnType(tree, method);
-    }
-
-    return mType;
-  }
-
-  /**
-   * Returns true if {@code type} structurally can support sequenced grow operations.
-   *
-   * <p>Only sequenced collections and sequenced maps can support sequenced grow operations. On JDKs
-   * before Java 21, {@code SequencedCollection} and {@code SequencedMap} are not present, but
-   * {@code Deque} still supports first/last insertion operations.
-   *
-   * @param type the type to test
-   * @return true if {@code type} structurally can support sequenced grow operations
-   */
-  private boolean typeCanSeqGrow(TypeMirror type) {
+  protected boolean typeLacksCapability(TypeMirror type) {
     if (type.getKind() != TypeKind.DECLARED) {
-      return false;
+      return true;
     }
-    return (sequencedCollectionErasure != null
-            && TypesUtils.isErasedSubtype(type, sequencedCollectionErasure, types))
-        || (sequencedMapErasure != null
-            && TypesUtils.isErasedSubtype(type, sequencedMapErasure, types))
-        || TypesUtils.isErasedSubtype(type, dequeErasure, types);
+    boolean canSeqGrow =
+        (sequencedCollectionErasure != null
+                && TypesUtils.isErasedSubtype(type, sequencedCollectionErasure, types))
+            || (sequencedMapErasure != null
+                && TypesUtils.isErasedSubtype(type, sequencedMapErasure, types))
+            || TypesUtils.isErasedSubtype(type, dequeErasure, types);
+    return !canSeqGrow;
   }
 }

@@ -19,7 +19,8 @@ import org.checkerframework.framework.qual.SubtypeOf;
  * For any collection whose type is {@code @MaybeIteratorPolyMod}, its iterator is
  * {@code @MaybeShrinkable}.
  *
- * <p>This annotation is used in GrowChecker, ShrinkChecker, and ReplaceChecker.
+ * <p>The Grow, Shrink, and Replace Checkers consult this annotation; the SeqGrow Checker does not,
+ * because an iterator has no sequenced-grow methods.
  *
  * @checker_framework.manual #modifiability-checker Modifiability Checker
  */

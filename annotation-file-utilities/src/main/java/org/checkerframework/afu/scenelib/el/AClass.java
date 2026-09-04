@@ -237,7 +237,8 @@ public class AClass extends ADeclaration {
    *
    * @return a new vivifying map from method signature to {@link AMethod}
    */
-  @SuppressWarnings("modifiability:return") // TODO
+  @SuppressWarnings("modifiability:return") // The anonymous subclass's constructor result
+  // is the top qualifier, so it does not propagate the backing map's @Modifiable type.
   private static @Modifiable VivifyingMap<String, AMethod> createMethodMap() {
     return new VivifyingMap<>(new LinkedHashMap<>()) {
       @Override
@@ -258,7 +259,8 @@ public class AClass extends ADeclaration {
    *
    * @return a new vivifying map from initializer block index to {@link ABlock}
    */
-  @SuppressWarnings("modifiability:return") // TODO
+  @SuppressWarnings("modifiability:return") // The anonymous subclass's constructor result
+  // is the top qualifier, so it does not propagate the backing map's @Modifiable type.
   private static @Modifiable VivifyingMap<Integer, ABlock> createInitBlockMap() {
     return new VivifyingMap<>(new LinkedHashMap<>()) {
       @Override
@@ -279,7 +281,8 @@ public class AClass extends ADeclaration {
    *
    * @return a new vivifying map from field name to field initializer
    */
-  @SuppressWarnings("modifiability:return") // TODO
+  @SuppressWarnings("modifiability:return") // The anonymous subclass's constructor result
+  // is the top qualifier, so it does not propagate the backing map's @Modifiable type.
   private static @Modifiable VivifyingMap<String, AExpression> createFieldInitMap() {
     return new VivifyingMap<>(new LinkedHashMap<>()) {
       @Override

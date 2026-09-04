@@ -1,46 +1,25 @@
 package org.checkerframework.checker.modifiability.grow;
 
-import com.sun.source.tree.MethodInvocationTree;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.modifiability.ModifiabilityBaseAnnotatedTypeFactory;
 import org.checkerframework.checker.modifiability.qual.BottomGrowable;
 import org.checkerframework.checker.modifiability.qual.Growable;
 import org.checkerframework.checker.modifiability.qual.MaybeGrowable;
-import org.checkerframework.checker.modifiability.qual.MaybeModifiable;
-import org.checkerframework.checker.modifiability.qual.Modifiable;
 import org.checkerframework.checker.modifiability.qual.PolyGrowable;
-import org.checkerframework.checker.modifiability.qual.PolyModifiable;
-import org.checkerframework.checker.modifiability.qual.PreservesModifiability;
 import org.checkerframework.checker.modifiability.qual.Ungrowable;
-import org.checkerframework.checker.modifiability.qual.Unmodifiable;
-import org.checkerframework.checker.modifiability.qual.UnmodifiableParam;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.basetype.BaseTypeChecker;
-import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedExecutableType;
 import org.checkerframework.javacutil.AnnotationBuilder;
-import org.checkerframework.javacutil.TreeUtils;
 import org.checkerframework.javacutil.TypesUtils;
 
 /** The annotated type factory for the {@link GrowChecker}. */
 public class GrowAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeFactory {
-
-  /** The erased {@code java.util.Map.Entry} type. */
-  private final TypeMirror mapEntryErasure;
-
-  /** The erased {@code java.util.Iterator} type. */
-  private final TypeMirror iteratorErasure;
-
-  /** The erased {@code java.util.ListIterator} type. */
-  private final TypeMirror listIteratorErasure;
-
-  // -- Hierarchy qualifiers ----------
 
   /** The {@code @}{@link MaybeGrowable} qualifier. */
   private final AnnotationMirror MAYBE_GROWABLE;
@@ -62,19 +41,16 @@ public class GrowAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeFact
   @SuppressWarnings("this-escape")
   public GrowAnnotatedTypeFactory(BaseTypeChecker checker) {
     super(checker);
-
-    this.mapEntryErasure = types.erasure(elements.getTypeElement("java.util.Map.Entry").asType());
-    this.iteratorErasure = types.erasure(elements.getTypeElement("java.util.Iterator").asType());
-    this.listIteratorErasure =
-        types.erasure(elements.getTypeElement("java.util.ListIterator").asType());
-    // Initialize annotation mirrors after the hierarchy is established.
     this.MAYBE_GROWABLE = AnnotationBuilder.fromClass(elements, MaybeGrowable.class);
     this.GROWABLE = AnnotationBuilder.fromClass(elements, Growable.class);
     this.UNGROWABLE = AnnotationBuilder.fromClass(elements, Ungrowable.class);
     this.POLY_GROWABLE = AnnotationBuilder.fromClass(elements, PolyGrowable.class);
-    this.topAnnotation = MAYBE_GROWABLE;
-
     postInit();
+  }
+
+  @Override
+  protected AnnotationMirror topAnnotation() {
+    return MAYBE_GROWABLE;
   }
 
   @Override
@@ -104,76 +80,31 @@ public class GrowAnnotatedTypeFactory extends ModifiabilityBaseAnnotatedTypeFact
   }
 
   /**
-   * Expands whole-modifiability aliases into this hierarchy, with structural weakening only for
-   * aliases whose meaning depends on the annotated type.
-   *
-   * <p>{@code @Modifiable} and {@code @Unmodifiable} claim all component capabilities, so on types
-   * that cannot grow structurally, such as {@code Map.Entry} and non-{@code ListIterator} {@code
-   * Iterator}, their grow component canonicalizes to {@code @MaybeGrowable}.
-   *
-   * <p>{@code @PolyModifiable} is different: it should usually become {@code @PolyGrowable}, but
-   * for {@code Map.Entry} only the replace bit is meaningful to carry from the map receiver. Its
-   * grow bit is therefore {@code @MaybeGrowable}.
-   *
-   * <p>When {@code tm} is null, as for an alias written in {@code @DefaultQualifier}, no structural
-   * weakening is applied.
+   * {@code Map.Entry} and a non-{@code ListIterator} {@code Iterator} have no grow methods, so
+   * {@code @Modifiable} and {@code @Unmodifiable} make no claim about them.
    */
   @Override
-  public AnnotationMirror canonicalAnnotation(
-      AnnotationMirror annotation, @Nullable TypeMirror tm) {
-    if (areSameByClass(annotation, Modifiable.class)) {
-      return tm != null && typeCannotGrow(tm) ? MAYBE_GROWABLE : GROWABLE;
-    } else if (areSameByClass(annotation, Unmodifiable.class)) {
-      return tm != null && typeCannotGrow(tm) ? MAYBE_GROWABLE : UNGROWABLE;
-    } else if (areSameByClass(annotation, PolyModifiable.class)) {
-      return tm != null && TypesUtils.isErasedSubtype(tm, mapEntryErasure, types)
-          ? MAYBE_GROWABLE
-          : POLY_GROWABLE;
-    } else if (areSameByClass(annotation, MaybeModifiable.class)
-        || areSameByClass(annotation, UnmodifiableParam.class)) {
-      return MAYBE_GROWABLE;
-    }
-    return super.canonicalAnnotation(annotation);
-  }
-
-  @Override
-  public AnnotationMirror canonicalAnnotation(AnnotationMirror annotation) {
-    return canonicalAnnotation(annotation, null);
-  }
-
-  @Override
-  protected ParameterizedExecutableType methodFromUse(
-      MethodInvocationTree tree, boolean inferTypeArgs) {
-    ParameterizedExecutableType mType = super.methodFromUse(tree, inferTypeArgs);
-    AnnotatedExecutableType method = mType.executableType();
-
-    // if the method is listIterator().
-    TypeMirror returnUnderlying = method.getReturnType().getUnderlyingType();
-    if (TypesUtils.isErasedSubtype(returnUnderlying, listIteratorErasure, types)) {
-      refineIteratorReturnType(tree, method);
-    }
-
-    // if the method is annotated @PreservesModifiability
-    ExecutableElement invokedMethod = TreeUtils.elementFromUse(tree);
-    if (getDeclAnnotation(invokedMethod, PreservesModifiability.class) != null) {
-      refinePreservesModifiabilityReturnType(tree, method);
-    }
-
-    return mType;
-  }
-
-  /**
-   * Returns true if {@code type} structurally cannot support grow operations.
-   *
-   * @param type the type to test
-   * @return true if {@code type} structurally cannot support grow operations
-   */
-  private boolean typeCannotGrow(TypeMirror type) {
+  protected boolean typeLacksCapability(TypeMirror type) {
     if (type.getKind() != TypeKind.DECLARED) {
       return false;
     }
     return TypesUtils.isErasedSubtype(type, mapEntryErasure, types)
         || (TypesUtils.isErasedSubtype(type, iteratorErasure, types)
             && !TypesUtils.isErasedSubtype(type, listIteratorErasure, types));
+  }
+
+  /**
+   * For {@code Map.Entry}, only the replace bit is meaningful to carry from the map receiver, so
+   * the grow bit of {@code @PolyModifiable} is {@code @MaybeGrowable}.
+   */
+  @Override
+  protected boolean polyLacksCapability(TypeMirror type) {
+    return TypesUtils.isErasedSubtype(type, mapEntryErasure, types);
+  }
+
+  @Override
+  protected @Nullable TypeMirror refinedIteratorResultBound() {
+    // A plain Iterator cannot grow, so only a ListIterator result is refined.
+    return listIteratorErasure;
   }
 }
