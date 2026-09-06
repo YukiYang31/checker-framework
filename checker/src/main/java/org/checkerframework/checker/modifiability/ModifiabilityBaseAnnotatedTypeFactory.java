@@ -16,6 +16,7 @@ import org.checkerframework.checker.modifiability.qual.PreservesModifiability;
 import org.checkerframework.checker.modifiability.qual.Unmodifiable;
 import org.checkerframework.checker.modifiability.qual.UnmodifiableParam;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signature.qual.CanonicalName;
 import org.checkerframework.common.basetype.BaseAnnotatedTypeFactory;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
@@ -69,7 +70,7 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
    * @param canonicalName the canonical name of a type that is always present
    * @return the erasure of the named type
    */
-  protected final TypeMirror erasureOf(String canonicalName) {
+  protected final TypeMirror erasureOf(@CanonicalName String canonicalName) {
     return types.erasure(elements.getTypeElement(canonicalName).asType());
   }
 
