@@ -22,6 +22,7 @@ import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedExecutableType;
 import org.checkerframework.javacutil.AnnotationBuilder;
+import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.TreeUtils;
 import org.checkerframework.javacutil.TypesUtils;
 
@@ -231,9 +232,10 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
    *
    * <p>If the method has no parameters or returns {@code void}, then the annotation has no effect.
    *
-   * <p>Otherwise, if the first argument has this checker's positive qualifier (for example,
-   * {@code @Shrinkable}), then so does the return type. For every other first argument, the return
-   * type is the top qualifier.
+   * <p>Otherwise, if the declared return type has a qualifier other than the top qualifier, that
+   * declared qualifier is used. If the first argument has this checker's positive qualifier (for
+   * example, {@code @Shrinkable}), then so does the return type. For every other first argument,
+   * the return type is the top qualifier.
    *
    * <p>Such a method cannot be annotated as {@code @Poly*}, because a negative (for example,
    * {@code @Unshrinkable}) input could yield either a positive or a negative result. It would be
@@ -250,6 +252,14 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
     AnnotatedTypeMirror returnType = methodType.getReturnType();
     if (tree.getArguments().isEmpty()
         || returnType.getUnderlyingType().getKind() == TypeKind.VOID) {
+      return;
+    }
+    AnnotationMirror declaredReturnAnno =
+        returnType.getPrimaryAnnotationInHierarchy(topAnnotation());
+    if (declaredReturnAnno != null
+        && !AnnotationUtils.areSameByName(declaredReturnAnno, topAnnotation())) {
+      // The declared result states its own qualifier, which is more precise (or, for a negative
+      // qualifier, a stronger guarantee) than what the argument implies.
       return;
     }
     AnnotatedTypeMirror argumentType = getAnnotatedType(tree.getArguments().get(0));
@@ -269,11 +279,13 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
    * CopyOnWriteArrayList} has unmodifiable iterators even though the list is modifiable.) Thus,
    * special treatment is needed for iterator methods.
    *
-   * <p>An explicitly declared result keeps its declared qualifier. Otherwise, the iterator of a
-   * receiver with this checker's negative qualifier also has that negative qualifier, and the
-   * iterator of a receiver that has both this checker's positive qualifier and
+   * <p>The iterator of a receiver with this checker's negative qualifier also has that negative
+   * qualifier; this is true even of a declaration such as {@code ArrayList}'s {@code @Growable
+   * ListIterator<E> listIterator()}, whose result has the capability only when the receiver does. A
+   * declared negative result keeps its declared qualifier, since such an iterator never has the
+   * capability. The iterator of a receiver that has both this checker's positive qualifier and
    * {@code @IteratorPolyMod} has the positive qualifier. In every other case the declared result
-   * type is left alone, which leaves the top qualifier in place.
+   * type is left alone.
    *
    * <p>This method is called by the Grow, Shrink, and Replace Checkers; see {@link
    * #refinedIteratorResultBound}.
@@ -293,13 +305,12 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
       return;
     }
     AnnotatedTypeMirror returnType = methodType.getReturnType();
-    // Keep explicit ungrowable/growable iterator contracts (for example, CopyOnWriteArrayList,
-    // ArrayList).
-    if (returnType.hasPrimaryAnnotation(negativeCapability())
-        || returnType.hasPrimaryAnnotation(positiveCapability())
-        || returnType.hasPrimaryAnnotation(polyCapability())) {
+    // Keep an explicit "no capability" iterator contract (for example, CopyOnWriteArrayList).
+    if (returnType.hasPrimaryAnnotation(negativeCapability())) {
       return;
     }
+    // There is no need to test for the polymorphic qualifier: `super.methodFromUse()` has already
+    // resolved it.
 
     Tree receiverTree = TreeUtils.getReceiverTree(tree);
     if (receiverTree == null) {
@@ -307,9 +318,15 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
     }
     AnnotatedTypeMirror receiverType = getAnnotatedType(receiverTree);
 
-    // The iterator of a collection that lacks the capability also lacks the capability.
+    // The iterator of a collection that lacks the capability also lacks the capability, even if
+    // the declaration says that the iterator has it (as ArrayList's does).
     if (receiverType.hasPrimaryAnnotation(negativeCapability())) {
       returnType.replaceAnnotation(negativeCapability());
+      return;
+    }
+
+    // Keep an explicit "has capability" iterator contract (for example, ArrayList).
+    if (returnType.hasPrimaryAnnotation(positiveCapability())) {
       return;
     }
 

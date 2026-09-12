@@ -12,14 +12,11 @@ import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.ThrowTree;
 import com.sun.source.tree.Tree;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.compilermsgs.qual.CompilerMessageKey;
-import org.checkerframework.checker.signature.qual.FullyQualifiedName;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.common.basetype.BaseTypeVisitor;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
@@ -36,9 +33,12 @@ import org.checkerframework.javacutil.TreeUtils;
  * <ul>
  *   <li>Suppressing the "constructor result must be TOP" check, since collection constructors may
  *       legitimately produce {@code @Modifiable}.
+ *   <li>Suppressing the rule that relates a constructor's result to that of the {@code this()} or
+ *       {@code super()} call within it, since a class may declare a different modifiability than
+ *       its superclass does.
  *   <li>Requiring all the constructors of a class to declare the same result qualifier, and
- *       requiring each method body to agree with that qualifier about whether the method throws
- *       {@link UnsupportedOperationException}.
+ *       requiring the body of each method that states a receiver requirement to agree with that
+ *       qualifier about whether the method throws {@link UnsupportedOperationException}.
  *   <li>Requiring an override to preserve a positive receiver capability of the method it
  *       overrides.
  * </ul>
@@ -50,9 +50,6 @@ public class ModifiabilityBaseVisitor
   // private static final String MODIFIABILITY_QUAL_PACKAGE =
   //     "org.checkerframework.checker.modifiability.qual";
 
-  /** Classes for which an error has been issued, to avoid issuing multiple errors. */
-  private static final Set<@FullyQualifiedName String> classWarned = new HashSet<>();
-
   /**
    * Create a ModifiabilityBaseVisitor.
    *
@@ -62,10 +59,24 @@ public class ModifiabilityBaseVisitor
     super(checker);
   }
 
+  /**
+   * Suppresses the framework's rule that a constructor's result type must be a supertype of the
+   * result of the {@code this()} or {@code super()} call within it.
+   *
+   * <p>A collection class may legitimately declare a different modifiability than its superclass
+   * does; for example, a class whose constructors are {@code @Ungrowable} may extend {@code
+   * AbstractList}, whose constructor is {@code @Growable}, and override every grow method to throw
+   * {@link UnsupportedOperationException}. The framework's rule would reject every such class,
+   * including at the implicit {@code super()} call of a constructor that has no explicit one.
+   *
+   * <p>What makes the suppression safe is that the declared modifiability of a class is checked
+   * against its method bodies; see {@link #processClassConstructors}. That check is not yet
+   * complete: it does not yet examine methods that the class inherits rather than declares.
+   */
   @Override
   protected void checkThisOrSuperConstructorCall(
       MethodInvocationTree call, @CompilerMessageKey String errorKey) {
-    // Nothing to do; it is handled by `processClassTree()`.
+    // Do nothing.
   }
 
   @Override
@@ -101,7 +112,6 @@ public class ModifiabilityBaseVisitor
       }
     }
 
-    @FullyQualifiedName String className = classTM.toString();
     boolean thisClassWarned = false;
 
     AnnotationMirror constructorAnno = null;
@@ -119,7 +129,6 @@ public class ModifiabilityBaseVisitor
       } else if (!AnnotationUtils.areSameByName(thisResultAnno, constructorAnno)) {
         checker.reportError(
             constructor, "inconsistent.constructor.result.type", thisResultAnno, constructorAnno);
-        classWarned.add(className);
         thisClassWarned = true;
       }
     }
@@ -131,27 +140,31 @@ public class ModifiabilityBaseVisitor
       return;
     }
 
-    // There is at least one constructor, and all constructors have the same result type annotation.
-    // Examine:
-    //  * the implementation of each method
-    //  * the annotation of each inherited method, only if the superclass constructors have
-    //    different type than this class's constructors.
+    // There is at least one constructor, and all constructors have the same result type
+    // annotation.  Examine the implementation of each method that states a capability requirement.
+    // TODO: also examine each method that inherits a capability requirement from a method that it
+    // overrides, such as an override of `Collection.add()`.
 
     for (MethodTree method : methods) {
       if (method.getBody() == null) {
         // The method is abstract or native, so it has no implementation to check.
         continue;
       }
+      if (method.getReceiverParameter() == null) {
+        // The method does not state a requirement on its receiver.  Its receiver qualifier was
+        // defaulted -- often from a qualifier on the class declaration, which applies to every
+        // method of the class -- so it does not indicate that this method is one of the
+        // operations that this checker's capability is about.
+        continue;
+      }
       AnnotatedDeclaredType receiverType = atypeFactory.getAnnotatedType(method).getReceiverType();
       if (receiverType != null) {
         AnnotationMirror receiverAnno = receiverType.getAnnotation();
         if (receiverAnno != null) {
-          checkImplOK(method, receiverAnno, constructorAnno, className);
+          checkImplOK(method, receiverAnno, constructorAnno);
         }
       }
     }
-
-    // TODO: check for overridden methods,
   }
 
   /**
@@ -160,13 +173,9 @@ public class ModifiabilityBaseVisitor
    * @param method a method declaration
    * @param receiverAnno the annotation on the method's receiver parameter
    * @param constructorAnno the annotation on the class constructors
-   * @param className the name of the enclosing class, used only for diagnostic messages
    */
   private void checkImplOK(
-      MethodTree method,
-      AnnotationMirror receiverAnno,
-      AnnotationMirror constructorAnno,
-      @FullyQualifiedName String className) {
+      MethodTree method, AnnotationMirror receiverAnno, AnnotationMirror constructorAnno) {
     // Every modifiability hierarchy contains a top qualifier, a positive qualifier, and a
     // polymorphic qualifier.  Every hierarchy but the Iterator one also contains a negative and a
     // bottom qualifier.
@@ -179,7 +188,6 @@ public class ModifiabilityBaseVisitor
     if (!AnnotationUtils.areSameByName(receiverAnno, positiveCapability())) {
       // The only qualifier left is the bottom one.
       checker.reportError(method, "bottom.annotation.on.receiver");
-      classWarned.add(className);
       return;
     }
 
@@ -196,12 +204,10 @@ public class ModifiabilityBaseVisitor
     if (isNegativeCapability(constructorAnno)) {
       if (!implIsUOE(method)) {
         checker.reportError(method, "method.implementation.not.uoe", constructorAnnoName);
-        classWarned.add(className);
       }
     } else {
       if (implIsUOE(method)) {
         checker.reportError(method, "method.implementation.is.uoe", constructorAnnoName);
-        classWarned.add(className);
       }
     }
   }
