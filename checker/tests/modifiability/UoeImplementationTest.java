@@ -56,6 +56,29 @@ public class UoeImplementationTest {
     }
   }
 
+  // `add()` states no requirement on its own receiver, but it inherits one from `List.add()`,
+  // which it overrides.  All the constructors are @Growable, so `add()` must not throw
+  // UnsupportedOperationException.
+  static @Growable class ClassLevelGrowableList extends AbstractList<String> {
+    @Growable ClassLevelGrowableList() {}
+
+    @Override
+    public String get(int index) {
+      return "value";
+    }
+
+    @Override
+    public int size() {
+      return 0;
+    }
+
+    @Override
+    // :: error: [method.implementation.is.uoe]
+    public boolean add(String element) {
+      throw new UnsupportedOperationException();
+    }
+  }
+
   // A method with no body has no implementation to check.
   abstract static class AbstractUngrowableList extends AbstractList<String> {
     @Ungrowable AbstractUngrowableList() {}

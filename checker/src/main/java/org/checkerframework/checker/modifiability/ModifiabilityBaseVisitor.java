@@ -13,15 +13,18 @@ import com.sun.source.tree.ThrowTree;
 import com.sun.source.tree.Tree;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 import org.checkerframework.checker.compilermsgs.qual.CompilerMessageKey;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.common.basetype.BaseTypeChecker;
 import org.checkerframework.common.basetype.BaseTypeVisitor;
 import org.checkerframework.framework.type.AnnotatedTypeMirror;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedDeclaredType;
 import org.checkerframework.framework.type.AnnotatedTypeMirror.AnnotatedExecutableType;
+import org.checkerframework.framework.util.AnnotatedTypes;
 import org.checkerframework.javacutil.AnnotationUtils;
 import org.checkerframework.javacutil.TreeUtils;
 
@@ -37,8 +40,9 @@ import org.checkerframework.javacutil.TreeUtils;
  *       {@code super()} call within it, since a class may declare a different modifiability than
  *       its superclass does.
  *   <li>Requiring all the constructors of a class to declare the same result qualifier, and
- *       requiring the body of each method that states a receiver requirement to agree with that
- *       qualifier about whether the method throws {@link UnsupportedOperationException}.
+ *       requiring the body of each method that requires the capability -- either on its own
+ *       receiver parameter or from a method that it overrides -- to agree with that qualifier about
+ *       whether the method throws {@link UnsupportedOperationException}.
  *   <li>Requiring an override to preserve a positive receiver capability of the method it
  *       overrides.
  * </ul>
@@ -69,9 +73,11 @@ public class ModifiabilityBaseVisitor
    * {@link UnsupportedOperationException}. The framework's rule would reject every such class,
    * including at the implicit {@code super()} call of a constructor that has no explicit one.
    *
-   * <p>What makes the suppression safe is that the declared modifiability of a class is checked
-   * against its method bodies; see {@link #processClassConstructors}. That check is not yet
-   * complete: it does not yet examine methods that the class inherits rather than declares.
+   * <p>What makes the suppression less unsafe is that the declared modifiability of a class is
+   * checked against its method bodies; see {@link #processClassConstructors}. That check is not
+   * complete, so the suppression does permit some unsound code. The check does nothing unless some
+   * constructor of the class declares a qualifier in this hierarchy, and it examines only the
+   * methods that the class declares, not those that it inherits without overriding.
    */
   @Override
   protected void checkThisOrSuperConstructorCall(
@@ -141,30 +147,58 @@ public class ModifiabilityBaseVisitor
     }
 
     // There is at least one constructor, and all constructors have the same result type
-    // annotation.  Examine the implementation of each method that states a capability requirement.
-    // TODO: also examine each method that inherits a capability requirement from a method that it
-    // overrides, such as an override of `Collection.add()`.
+    // annotation.  Examine the implementation of each method that requires the capability.
 
     for (MethodTree method : methods) {
       if (method.getBody() == null) {
         // The method is abstract or native, so it has no implementation to check.
         continue;
       }
-      if (method.getReceiverParameter() == null) {
-        // The method does not state a requirement on its receiver.  Its receiver qualifier was
-        // defaulted -- often from a qualifier on the class declaration, which applies to every
-        // method of the class -- so it does not indicate that this method is one of the
-        // operations that this checker's capability is about.
-        continue;
-      }
-      AnnotatedDeclaredType receiverType = atypeFactory.getAnnotatedType(method).getReceiverType();
-      if (receiverType != null) {
-        AnnotationMirror receiverAnno = receiverType.getAnnotation();
-        if (receiverAnno != null) {
-          checkImplOK(method, receiverAnno, constructorAnno);
-        }
+      AnnotationMirror receiverAnno = receiverCapabilityRequirement(method);
+      if (receiverAnno != null) {
+        checkImplOK(method, receiverAnno, constructorAnno);
       }
     }
+  }
+
+  /**
+   * Returns the qualifier that states what {@code method} requires of its receiver, or null if the
+   * method states no requirement.
+   *
+   * <p>A requirement that the method writes on its own receiver parameter is used directly.
+   * Otherwise, the method's receiver qualifier was defaulted -- often from a qualifier on the class
+   * declaration, which applies to every method of the class -- so it does not indicate that this
+   * method is one of the operations that this checker's capability is about. In that case, the
+   * requirement is the one that the method inherits from the methods it overrides, such as the
+   * {@code @Growable} receiver of {@code Collection.add()}.
+   *
+   * @param method a method declaration
+   * @return the capability that {@code method} requires of its receiver, or null if none
+   */
+  private @Nullable AnnotationMirror receiverCapabilityRequirement(MethodTree method) {
+    if (method.getReceiverParameter() != null) {
+      AnnotatedDeclaredType receiverType = atypeFactory.getAnnotatedType(method).getReceiverType();
+      return receiverType == null ? null : receiverType.getAnnotation();
+    }
+
+    ExecutableElement methodElt = TreeUtils.elementFromDeclaration(method);
+    if (methodElt == null) {
+      return null;
+    }
+    for (Map.Entry<AnnotatedDeclaredType, ExecutableElement> pair :
+        AnnotatedTypes.overriddenMethods(elements, atypeFactory, methodElt).entrySet()) {
+      AnnotatedExecutableType overriddenMethodType =
+          AnnotatedTypes.asMemberOf(types, atypeFactory, pair.getKey(), pair.getValue());
+      AnnotatedDeclaredType overriddenReceiver = overriddenMethodType.getReceiverType();
+      // Only a positive requirement is inherited.  A defaulted top or polymorphic qualifier says
+      // nothing, and a negative or bottom qualifier is not a requirement that this method must
+      // live up to.
+      if (overriddenReceiver != null
+          && overriddenReceiver.hasPrimaryAnnotation(positiveCapability())) {
+        return positiveCapability();
+      }
+    }
+    return null;
   }
 
   /**
@@ -205,11 +239,14 @@ public class ModifiabilityBaseVisitor
       if (!implIsUOE(method)) {
         checker.reportError(method, "method.implementation.not.uoe", constructorAnnoName);
       }
-    } else {
+    } else if (AnnotationUtils.areSameByName(constructorAnno, positiveCapability())) {
       if (implIsUOE(method)) {
         checker.reportError(method, "method.implementation.is.uoe", constructorAnnoName);
       }
     }
+    // Otherwise, the constructors' result is the top or the polymorphic qualifier, which claims
+    // neither that the class has the capability nor that it lacks it.  Either method body is
+    // consistent with such a constructor.
   }
 
   /**

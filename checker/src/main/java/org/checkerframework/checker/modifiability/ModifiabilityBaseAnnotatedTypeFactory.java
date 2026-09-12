@@ -279,13 +279,18 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
    * CopyOnWriteArrayList} has unmodifiable iterators even though the list is modifiable.) Thus,
    * special treatment is needed for iterator methods.
    *
-   * <p>The iterator of a receiver with this checker's negative qualifier also has that negative
-   * qualifier; this is true even of a declaration such as {@code ArrayList}'s {@code @Growable
-   * ListIterator<E> listIterator()}, whose result has the capability only when the receiver does. A
-   * declared negative result keeps its declared qualifier, since such an iterator never has the
-   * capability. The iterator of a receiver that has both this checker's positive qualifier and
-   * {@code @IteratorPolyMod} has the positive qualifier. In every other case the declared result
-   * type is left alone.
+   * <p>A declared negative result keeps its declared qualifier, since such an iterator never has
+   * the capability. Otherwise, the result qualifier is computed from the receiver: the iterator of
+   * a receiver with this checker's negative qualifier also has that negative qualifier, and the
+   * iterator of a receiver that has both this checker's positive qualifier and
+   * {@code @IteratorPolyMod} has the positive qualifier. In every other case the result is the top
+   * qualifier.
+   *
+   * <p>A declared positive result is not kept, because it holds only when the receiver has the
+   * capability and preserves it. For example, {@code ArrayList} declares {@code @Growable
+   * ListIterator<E> listIterator()}, but an {@code @Ungrowable ArrayList} has an
+   * {@code @Ungrowable} list iterator and a {@code @MaybeGrowable ArrayList} has a
+   * {@code @MaybeGrowable} one.
    *
    * <p>This method is called by the Grow, Shrink, and Replace Checkers; see {@link
    * #refinedIteratorResultBound}.
@@ -305,15 +310,22 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
       return;
     }
     AnnotatedTypeMirror returnType = methodType.getReturnType();
-    // Keep an explicit "no capability" iterator contract (for example, CopyOnWriteArrayList).
+    // Keep an explicit "no capability" iterator contract (for example, CopyOnWriteArrayList),
+    // whose iterator lacks the capability no matter what the receiver is.
     if (returnType.hasPrimaryAnnotation(negativeCapability())) {
       return;
     }
-    // There is no need to test for the polymorphic qualifier: `super.methodFromUse()` has already
-    // resolved it.
+    if (returnType.hasPrimaryAnnotation(polyCapability())) {
+      // `super.methodFromUse()` resolves the polymorphic qualifier only when it infers type
+      // arguments; see `GenericAnnotatedTypeFactory.methodFromUsePreSubstitution()`.  On the other
+      // path, leave the polymorphic qualifier for that later resolution.
+      return;
+    }
 
     Tree receiverTree = TreeUtils.getReceiverTree(tree);
     if (receiverTree == null) {
+      // TODO: The receiver is the implicit `this`, whose type is the receiver type of the
+      // enclosing method.  Until that is implemented, leave the declared result alone.
       return;
     }
     AnnotatedTypeMirror receiverType = getAnnotatedType(receiverTree);
@@ -325,19 +337,20 @@ public abstract class ModifiabilityBaseAnnotatedTypeFactory extends BaseAnnotate
       return;
     }
 
-    // Keep an explicit "has capability" iterator contract (for example, ArrayList).
-    if (returnType.hasPrimaryAnnotation(positiveCapability())) {
-      return;
-    }
-
     // The receiver has the capability; its iterator does too if the receiver is @IteratorPolyMod.
     if (receiverType.hasPrimaryAnnotation(positiveCapability())) {
       AnnotatedTypeMirror iteratorHierarchyType =
           getTypeFactoryOfSubchecker(IteratorChecker.class).getAnnotatedType(receiverTree);
       if (iteratorHierarchyType.hasPrimaryAnnotation(ITERATOR_POLY_MOD)) {
         returnType.replaceAnnotation(positiveCapability());
+        return;
       }
     }
+
+    // The receiver does not both have the capability and preserve it, so its iterator has no
+    // guarantee about the capability -- even if the declared result says that it does, as
+    // ArrayList's `@Growable ListIterator<E> listIterator()` does.
+    returnType.replaceAnnotation(topAnnotation());
   }
 
   /**

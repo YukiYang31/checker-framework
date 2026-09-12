@@ -106,6 +106,15 @@ public class IteratorPrecisionTest {
     @Modifiable ListIterator<String> indexedIterator2 = list2.listIterator(0);
   }
 
+  // ArrayList declares `@Growable ListIterator<E> listIterator()`, but that result has the
+  // capability only when the receiver has it.  A parameter whose type is written as plain
+  // `ArrayList` is @MaybeGrowable, so its list iterator is @MaybeGrowable too.
+  void listIteratorOfMaybeGrowableArrayList(ArrayList<String> list) {
+    ListIterator<String> iterator = list.listIterator();
+    // :: error: [method.invocation]
+    iterator.add("a");
+  }
+
   void UnmodListIterator() {
     List<String> list = List.of("a", "b");
     @Unshrinkable Iterator<String> iterator = list.iterator();
