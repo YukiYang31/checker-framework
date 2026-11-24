@@ -9,6 +9,7 @@ import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.ArrayAccess;
 import org.checkerframework.dataflow.expression.ClassName;
 import org.checkerframework.dataflow.expression.FieldAccess;
+import org.checkerframework.dataflow.expression.IteratedCollectionElement;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.dataflow.expression.LocalVariable;
 import org.checkerframework.dataflow.expression.MethodCall;
@@ -74,6 +75,12 @@ public class LockStore extends CFAbstractStore<CFValue, LockStore> {
       if (value != null) {
         localVariableValues.put(localVar, value);
       }
+    } else if (je instanceof IteratedCollectionElement collectionElt) {
+      CFValue current = iteratedCollectionElements.get(collectionElt);
+      CFValue value = changeLockAnnoToTop(je, current);
+      if (value != null) {
+        iteratedCollectionElements.put(collectionElt, value);
+      }
     } else if (je instanceof FieldAccess fieldAcc) {
       CFValue current = fieldValues.get(fieldAcc);
       CFValue value = changeLockAnnoToTop(je, current);
@@ -109,15 +116,32 @@ public class LockStore extends CFAbstractStore<CFValue, LockStore> {
    * Makes a new CFValue with the same annotations as currentValue except that the annotation in the
    * LockPossiblyHeld hierarchy is set to LockPossiblyHeld. If currentValue is null, then a new
    * value is created where the annotation set is LockPossiblyHeld and GuardedByUnknown.
+   *
+   * @param je the expression whose value is currentValue
+   * @param currentValue a value, or null if the store has no value for {@code je}
+   * @return a value whose annotation in the LockPossiblyHeld hierarchy is LockPossiblyHeld, or null
+   *     if {@code currentValue} is non-null and has no annotation in the GuardedBy hierarchy
    */
-  private CFValue changeLockAnnoToTop(JavaExpression je, @Nullable CFValue currentValue) {
+  private @Nullable CFValue changeLockAnnoToTop(JavaExpression je, @Nullable CFValue currentValue) {
     if (currentValue == null) {
       AnnotationMirrorSet set = new AnnotationMirrorSet();
       set.add(atypeFactory.GUARDEDBYUNKNOWN);
       set.add(atypeFactory.LOCKPOSSIBLYHELD);
       return analysis.createAbstractValue(set, je.getType());
     }
+    return changeLockAnnoToTop(currentValue);
+  }
 
+  /**
+   * Returns a new CFValue with the same annotations as currentValue except that the annotation in
+   * the LockPossiblyHeld hierarchy is set to LockPossiblyHeld.
+   *
+   * @param currentValue a value
+   * @return a copy of {@code currentValue} whose annotation in the LockPossiblyHeld hierarchy is
+   *     LockPossiblyHeld, or null if {@code currentValue} has no annotation in the GuardedBy
+   *     hierarchy
+   */
+  private @Nullable CFValue changeLockAnnoToTop(CFValue currentValue) {
     QualifierHierarchy qualHierarchy = atypeFactory.getQualifierHierarchy();
     AnnotationMirrorSet currentSet = currentValue.getAnnotations();
     AnnotationMirror gb =
@@ -160,7 +184,7 @@ public class LockStore extends CFAbstractStore<CFValue, LockStore> {
   }
 
   @Override
-  public void updateForMethodCall(MethodInvocationNode n, CFValue val) {
+  public void updateForMethodCall(MethodInvocationNode n, @Nullable CFValue val) {
     super.updateForMethodCall(n, val);
     ExecutableElement method = n.getTarget().getMethod();
     // The following behavior is similar to setting the sideEffectsUnrefineAliases field of
@@ -181,16 +205,34 @@ public class LockStore extends CFAbstractStore<CFValue, LockStore> {
         }
       }
 
-      // Local variables could also be unlocked via an alias
+      // Local variables and iterated collection elements could also be unlocked via an alias
       for (LocalVariable var : new ArrayList<>(localVariableValues.keySet())) {
         CFValue newValue = changeLockAnnoToTop(var, localVariableValues.get(var));
         if (newValue != null) {
           localVariableValues.put(var, newValue);
         }
       }
+      for (IteratedCollectionElement ice : new ArrayList<>(iteratedCollectionElements.keySet())) {
+        CFValue newValue = changeLockAnnoToTop(ice, iteratedCollectionElements.get(ice));
+        if (newValue != null) {
+          iteratedCollectionElements.put(ice, newValue);
+        }
+      }
+
+      // super.updateForMethodCall keeps the stored values of some method calls, such as a call
+      // whose receiver and arguments no other code can modify (for example, a static @Pure
+      // method with no arguments).  The lock that such a call returns might have been locked or
+      // unlocked by the side effect, so set it to @LockPossiblyHeld without changing its
+      // GuardedBy annotation.
+      for (MethodCall mc : new ArrayList<>(methodCallExpressions.keySet())) {
+        CFValue newValue = changeLockAnnoToTop(mc, methodCallExpressions.get(mc));
+        if (newValue != null) {
+          methodCallExpressions.put(mc, newValue);
+        }
+      }
 
       if (thisValue != null) {
-        thisValue = changeLockAnnoToTop(null, thisValue);
+        thisValue = changeLockAnnoToTop(thisValue);
       }
     }
   }
